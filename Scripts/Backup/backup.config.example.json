@@ -1,0 +1,10 @@
+{
+  "SqlServer": ".\\SQL2019",
+  "Database": "BoMonTriTue",
+  "BackupDirectory": "C:\\FASTFBO\\TAPHOA\\BoMonTriTue\\AutoBackup\\Backups",
+  "RcloneExe": "C:\\FASTFBO\\TAPHOA\\BoMonTriTue\\AutoBackup\\rclone\\rclone.exe",
+  "RcloneConfig": "C:\\FASTFBO\\TAPHOA\\BoMonTriTue\\AutoBackup\\rclone.conf",
+  "DriveDestination": "gdrive:SQLBackups/BoMonTriTue",
+  "RetentionDays": 30
+}
+
