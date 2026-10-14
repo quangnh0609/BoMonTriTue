@@ -39,7 +39,7 @@ File mẫu đã dùng đường dẫn AutoBackup trên server. Xác nhận `SqlS
 
 ### Các lựa chọn khi kết nối Drive
 
-Trong `rclone config`, chọn `n`, đặt tên remote **gdrive**, chọn backend **Google Drive** theo tên (số thứ tự có thể thay đổi). Có thể để trống client_id/client_secret để dùng client mặc định. Chọn quyền đọc/ghi/xóa backup; để trống service_account_file nếu đăng nhập Google cá nhân. Xác thực qua trình duyệt nếu server có trình duyệt. Với My Drive cá nhân, không chọn Shared Drive. Xác nhận lưu remote rồi thoát bằng `q`.
+Trong `rclone config`, chọn `n`, đặt tên remote **gdrive**, chọn backend **Google Drive** theo tên (số thứ tự có thể thay đổi). Tạo OAuth client riêng loại Desktop app trong Google Cloud, bật Google Drive API, rồi nhập client_id/client_secret của bạn. Client dùng chung của rclone sẽ ngừng hoạt động trong năm 2026; không để trống cho tác vụ dài hạn. Với tài khoản cá nhân, cấu hình consent External và chuyển sang In production để tránh token hết hạn sau 7 ngày khi ở Testing. Xem hướng dẫn tạo client ở liên kết rclone bên trên. Chọn quyền đọc/ghi/xóa backup; để trống service_account_file nếu đăng nhập Google cá nhân. Xác thực qua trình duyệt nếu server có trình duyệt. Với My Drive cá nhân, không chọn Shared Drive. Xác nhận lưu remote rồi thoát bằng `q`.
 
 File giải nén phải nằm đúng tại `AutoBackup\rclone\rclone.exe`, không lồng thêm thư mục phiên bản. Sau khi cấu hình, tạo thư mục riêng và kiểm tra:
 
@@ -104,4 +104,5 @@ LastTaskResult phải bằng `0`, có backup mới trên Drive và log thành c�
 - https://rclone.org/commands/rclone_copyto/
 - https://learn.microsoft.com/en-us/sql/relational-databases/backup-restore/copy-only-backups-sql-server
 - https://learn.microsoft.com/en-us/sql/t-sql/statements/restore-statements-verifyonly-transact-sql
+
 
