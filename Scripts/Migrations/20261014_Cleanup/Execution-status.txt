@@ -1,0 +1,1 @@
+COMPLETED: App cleanup committed; all retained table row counts unchanged; Sys database dropped and verified absent.

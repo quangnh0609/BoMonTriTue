@@ -1,0 +1,1 @@
+Đã đổi tên TAPHOA_FBOHRMSP229_App thành BoMonTriTue trên QUANGNH\SQL2019 ngày 2026-10-14. web.config, tài liệu hiện tại và danh sách giữ đã cập nhật; script migration/audit lịch sử vẫn ghi tên tại thời điểm thực hiện. Không chạy lại script. Tên logical/physical file không thay đổi.

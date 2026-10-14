@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+
+  <appSettings>
+    <add key="ShowFeeColumn" value="false" />
+	<add key="SqlCommandTimeoutSeconds" value="0" />
+  </appSettings>
+
+  <connectionStrings>
+    <add name="MyDbConn" 
+         connectionString="Server=YOUR_SQL_SERVER; Database=BoMonTriTue; User Id=YOUR_SQL_USER; Password=YOUR_SQL_PASSWORD;" 
+         providerName="System.Data.SqlClient" />
+  </connectionStrings>
+  
+  <system.web>
+    <globalization fileEncoding="utf-8" requestEncoding="utf-8" responseEncoding="utf-8" />
+    <httpRuntime executionTimeout="86400" />
+	<sessionState timeout="10080" mode="InProc" />
+    <authentication mode="Forms">
+      <forms timeout="10080" slidingExpiration="true" />
+    </authentication>
+  </system.web>
+
+  <system.webServer>
+    <httpProtocol>
+      <customHeaders>
+        <remove name="Permissions-Policy" />
+        <add name="Permissions-Policy" value="unload=(self)" />
+      </customHeaders>
+    </httpProtocol>
+    <defaultDocument>
+      <files>
+        <clear />
+        <add value="default.aspx" />
+      </files>
+    </defaultDocument>
+    <directoryBrowse enabled="false" />
+  </system.webServer>
+  
+  
+  <system.web.extensions>
+    <scripting>
+      <webServices>
+        <jsonSerialization maxJsonLength="2147483647" />
+      </webServices>
+    </scripting>
+  </system.web.extensions>
+
+</configuration>
+

@@ -1,0 +1,428 @@
+[
+  {
+    "object_id": 5444385,
+    "name": "PK_bet_ticket_champion",
+    "schema": "dbo",
+    "type": "PK"
+  },
+  {
+    "object_id": 17252408,
+    "name": "bet_season",
+    "schema": "dbo",
+    "type": "U"
+  },
+  {
+    "object_id": 33252465,
+    "name": "PK_bet_season",
+    "schema": "dbo",
+    "type": "PK"
+  },
+  {
+    "object_id": 81252636,
+    "name": "bet_team",
+    "schema": "dbo",
+    "type": "U"
+  },
+  {
+    "object_id": 83283852,
+    "name": "ff_NumberFormat",
+    "schema": "dbo",
+    "type": "FN"
+  },
+  {
+    "object_id": 97252693,
+    "name": "PK_bet_team",
+    "schema": "dbo",
+    "type": "PK"
+  },
+  {
+    "object_id": 171016982,
+    "name": "bet_ticket_code",
+    "schema": "dbo",
+    "type": "P"
+  },
+  {
+    "object_id": 192589066,
+    "name": "bet_match_insert",
+    "schema": "dbo",
+    "type": "P"
+  },
+  {
+    "object_id": 195349052,
+    "name": "bet_host",
+    "schema": "dbo",
+    "type": "U"
+  },
+  {
+    "object_id": 211349109,
+    "name": "PK_bet_host",
+    "schema": "dbo",
+    "type": "PK"
+  },
+  {
+    "object_id": 305253434,
+    "name": "bet_match_total",
+    "schema": "dbo",
+    "type": "U"
+  },
+  {
+    "object_id": 321253491,
+    "name": "PK_bet_match_total",
+    "schema": "dbo",
+    "type": "PK"
+  },
+  {
+    "object_id": 336589579,
+    "name": "vbet_esport_match",
+    "schema": "dbo",
+    "type": "V"
+  },
+  {
+    "object_id": 337253548,
+    "name": "bet_match",
+    "schema": "dbo",
+    "type": "U"
+  },
+  {
+    "object_id": 352589636,
+    "name": "bet_esport_matches",
+    "schema": "dbo",
+    "type": "P"
+  },
+  {
+    "object_id": 353253605,
+    "name": "PK_bet_match",
+    "schema": "dbo",
+    "type": "PK"
+  },
+  {
+    "object_id": 369253662,
+    "name": "bet_match_total_insert",
+    "schema": "dbo",
+    "type": "TR"
+  },
+  {
+    "object_id": 411017837,
+    "name": "bet_match_result_update",
+    "schema": "dbo",
+    "type": "P"
+  },
+  {
+    "object_id": 477114082,
+    "name": "bet_ticket_copy",
+    "schema": "dbo",
+    "type": "P"
+  },
+  {
+    "object_id": 516066216,
+    "name": "bet_match_result",
+    "schema": "dbo",
+    "type": "P"
+  },
+  {
+    "object_id": 524398229,
+    "name": "bet_login",
+    "schema": "dbo",
+    "type": "P"
+  },
+  {
+    "object_id": 572398400,
+    "name": "vbet_match_total_for_web",
+    "schema": "dbo",
+    "type": "V"
+  },
+  {
+    "object_id": 643350648,
+    "name": "bet_setting",
+    "schema": "dbo",
+    "type": "P"
+  },
+  {
+    "object_id": 651018692,
+    "name": "bet_matches",
+    "schema": "dbo",
+    "type": "P"
+  },
+  {
+    "object_id": 704590890,
+    "name": "vbet_payment",
+    "schema": "dbo",
+    "type": "V"
+  },
+  {
+    "object_id": 781115165,
+    "name": "userinfo2",
+    "schema": "dbo",
+    "type": "U"
+  },
+  {
+    "object_id": 797115222,
+    "name": "PK_userinfo2",
+    "schema": "dbo",
+    "type": "PK"
+  },
+  {
+    "object_id": 813115279,
+    "name": "DF_userinfo2_comment2",
+    "schema": "dbo",
+    "type": "D"
+  },
+  {
+    "object_id": 1120592372,
+    "name": "bet_ticket_clear",
+    "schema": "dbo",
+    "type": "P"
+  },
+  {
+    "object_id": 1136592429,
+    "name": "bet_ticket_delete",
+    "schema": "dbo",
+    "type": "P"
+  },
+  {
+    "object_id": 1143544449,
+    "name": "bet_esport_match",
+    "schema": "dbo",
+    "type": "U"
+  },
+  {
+    "object_id": 1152592486,
+    "name": "bet_champion_insert",
+    "schema": "dbo",
+    "type": "P"
+  },
+  {
+    "object_id": 1159544506,
+    "name": "PK_bet_esport_match",
+    "schema": "dbo",
+    "type": "PK"
+  },
+  {
+    "object_id": 1168592543,
+    "name": "bet_champions",
+    "schema": "dbo",
+    "type": "P"
+  },
+  {
+    "object_id": 1173448546,
+    "name": "bet_ticket_champion_code",
+    "schema": "dbo",
+    "type": "P"
+  },
+  {
+    "object_id": 1175544563,
+    "name": "DF__bet_espor__creat__461162F3",
+    "schema": "dbo",
+    "type": "D"
+  },
+  {
+    "object_id": 1191544620,
+    "name": "bet_esport_game",
+    "schema": "dbo",
+    "type": "U"
+  },
+  {
+    "object_id": 1207544677,
+    "name": "PK_bet_esport_game",
+    "schema": "dbo",
+    "type": "PK"
+  },
+  {
+    "object_id": 1223544734,
+    "name": "UQ_bet_esport_game",
+    "schema": "dbo",
+    "type": "UQ"
+  },
+  {
+    "object_id": 1239544791,
+    "name": "FK_bet_esport_game_match",
+    "schema": "dbo",
+    "type": "F"
+  },
+  {
+    "object_id": 1319545076,
+    "name": "bet_print",
+    "schema": "dbo",
+    "type": "P"
+  },
+  {
+    "object_id": 1368925240,
+    "name": "bet_champion",
+    "schema": "dbo",
+    "type": "U"
+  },
+  {
+    "object_id": 1384925297,
+    "name": "PK_bet_champion",
+    "schema": "dbo",
+    "type": "PK"
+  },
+  {
+    "object_id": 1466305575,
+    "name": "bet_payment",
+    "schema": "dbo",
+    "type": "U"
+  },
+  {
+    "object_id": 1482305632,
+    "name": "PK_bet_payment",
+    "schema": "dbo",
+    "type": "PK"
+  },
+  {
+    "object_id": 1494829679,
+    "name": "bet_ucChangePass",
+    "schema": "dbo",
+    "type": "P"
+  },
+  {
+    "object_id": 1572069978,
+    "name": "bet_ticket_esport_code",
+    "schema": "dbo",
+    "type": "P"
+  },
+  {
+    "object_id": 1575545988,
+    "name": "bet_ticket_esport",
+    "schema": "dbo",
+    "type": "U"
+  },
+  {
+    "object_id": 1585974018,
+    "name": "bet_champion_result",
+    "schema": "dbo",
+    "type": "P"
+  },
+  {
+    "object_id": 1591546045,
+    "name": "PK_bet_ticket_esport",
+    "schema": "dbo",
+    "type": "PK"
+  },
+  {
+    "object_id": 1607546102,
+    "name": "DF__bet_ticke__datet__5FD134F6",
+    "schema": "dbo",
+    "type": "D"
+  },
+  {
+    "object_id": 1623546159,
+    "name": "FK_bet_ticket_esport_match",
+    "schema": "dbo",
+    "type": "F"
+  },
+  {
+    "object_id": 1700070434,
+    "name": "bet_check_right",
+    "schema": "dbo",
+    "type": "FN"
+  },
+  {
+    "object_id": 1732070548,
+    "name": "bet_match_delete",
+    "schema": "dbo",
+    "type": "P"
+  },
+  {
+    "object_id": 1764070662,
+    "name": "bet_esport_match_delete",
+    "schema": "dbo",
+    "type": "P"
+  },
+  {
+    "object_id": 1776594709,
+    "name": "bet_ticket_result",
+    "schema": "dbo",
+    "type": "P"
+  },
+  {
+    "object_id": 1780070719,
+    "name": "bet_esport_match_save",
+    "schema": "dbo",
+    "type": "P"
+  },
+  {
+    "object_id": 1790498749,
+    "name": "bet_code",
+    "schema": "dbo",
+    "type": "U"
+  },
+  {
+    "object_id": 1806498806,
+    "name": "PK_bet_code",
+    "schema": "dbo",
+    "type": "PK"
+  },
+  {
+    "object_id": 1812070833,
+    "name": "bet_champion_delete",
+    "schema": "dbo",
+    "type": "P"
+  },
+  {
+    "object_id": 1823878856,
+    "name": "bet_ticket",
+    "schema": "dbo",
+    "type": "U"
+  },
+  {
+    "object_id": 1839878913,
+    "name": "PK_bet_ticket",
+    "schema": "dbo",
+    "type": "PK"
+  },
+  {
+    "object_id": 1876071061,
+    "name": "bet_ticket_match",
+    "schema": "dbo",
+    "type": "P"
+  },
+  {
+    "object_id": 1892071118,
+    "name": "bet_ticket_user",
+    "schema": "dbo",
+    "type": "P"
+  },
+  {
+    "object_id": 1940071289,
+    "name": "bet_ticket_esport_insert",
+    "schema": "dbo",
+    "type": "P"
+  },
+  {
+    "object_id": 1956071346,
+    "name": "bet_ticket_insert",
+    "schema": "dbo",
+    "type": "P"
+  },
+  {
+    "object_id": 1975547413,
+    "name": "bet_table",
+    "schema": "dbo",
+    "type": "P"
+  },
+  {
+    "object_id": 2020071574,
+    "name": "vbet_match_total",
+    "schema": "dbo",
+    "type": "V"
+  },
+  {
+    "object_id": 2052202361,
+    "name": "ff_Inlist",
+    "schema": "dbo",
+    "type": "FN"
+  },
+  {
+    "object_id": 2064595735,
+    "name": "bet_ticket_champion_insert",
+    "schema": "dbo",
+    "type": "P"
+  },
+  {
+    "object_id": 2136927976,
+    "name": "bet_ticket_champion",
+    "schema": "dbo",
+    "type": "U"
+  }
+]

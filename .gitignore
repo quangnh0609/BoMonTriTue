@@ -1,0 +1,22 @@
+.vs/
+.vscode/
+bin/
+obj/
+App_Data/
+*.user
+*.suo
+*.log
+
+
+# Local database files and backups
+/Databases/
+*.bak
+*.mdf
+*.ndf
+*.ldf
+*.db
+*.sqlite
+*.sqlite3
+
+# Local connection credentials
+/web.config

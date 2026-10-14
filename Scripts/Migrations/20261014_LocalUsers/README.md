@@ -1,0 +1,1 @@
+Migration đã chạy thành công ngày 2026-10-14 trên QUANGNH\SQL2019, DB TAPHOA_FBOHRMSP229_App. Không chạy lại. Dữ liệu gốc Sys được giữ nguyên. Xem ../../Audit/README.md. Script chứa transaction xuyên GO; khi lỗi phải dừng và rollback, không tiếp tục các batch sau. Không chứa mật khẩu hoặc dữ liệu tài khoản.

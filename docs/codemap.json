@@ -1,0 +1,25 @@
+{
+  "database": "BoMonTriTue",
+  "server": "QUANGNH\\SQL2019",
+  "explicitlyRetained": [
+    "dbo.bet_host"
+  ],
+  "authentication": {
+    "entry": "login.aspx",
+    "session": "App_Code/AuthSession.cs",
+    "procedures": [
+      "dbo.bet_login",
+      "dbo.bet_setting",
+      "dbo.bet_ucChangePass"
+    ],
+    "table": "dbo.userinfo2"
+  },
+  "scope": "Scripts/Audit/Keep-objects.csv",
+  "excluded": [
+    "dbo.bet_team2",
+    "dbo.bet_ticket2",
+    "dbo.bet_ticket_result2"
+  ],
+  "migration": "Scripts/Migrations/20261014_LocalUsers/01_MoveUserinfoToApp.sql",
+  "cleanup": "Scripts/Migrations/20261014_Cleanup/"
+}
