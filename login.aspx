@@ -1,4 +1,4 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true" CodePage="65001" %>
+<%@ Page Language="C#" AutoEventWireup="true" CodePage="65001" %>
 <%@ Import Namespace="System.Data.SqlClient" %>
 <%@ Import Namespace="System.Security.Cryptography" %>
 <%@ Import Namespace="System.Text" %>
@@ -114,7 +114,7 @@
 
             <div class="space-y-2">
                 <div class="flex items-center gap-2">
-                    <input type="checkbox" id="chkRememberLogin" runat="server" class="w-4 h-4 accent-blue-600 cursor-pointer">
+                    <input type="checkbox" id="chkRememberLogin" runat="server" checked="checked" class="w-4 h-4 accent-blue-600 cursor-pointer">
                     <label for="<%= chkRememberLogin.ClientID %>" class="text-sm text-gray-600 cursor-pointer select-none">Ghi nhớ đăng nhập</label>
                 </div>
                 <div class="flex items-center gap-2">
