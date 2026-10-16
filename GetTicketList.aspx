@@ -36,6 +36,7 @@
             // Lấy giá trị từ request (đã có mặc định trong HTML)
             int userId = int.Parse(data["userId"]);
             string match = data["match"];
+            bool exactFootballMatch = data.ContainsKey("ticketType") && data["ticketType"] == "football";
             bool exactEsportMatch = data.ContainsKey("ticketType") && data["ticketType"] == "esport";
             string season = data.ContainsKey("season") ? data["season"] : "";
             string type = data["type"];
@@ -54,6 +55,10 @@
                 if (exactEsportMatch)
                 {
                     cmd.Parameters.Add("@exactEsportMatch", SqlDbType.Bit).Value = true;
+                }
+                if (exactFootballMatch)
+                {
+                    cmd.Parameters.Add("@exactFootballMatch", SqlDbType.Bit).Value = true;
                 }
                 SqlDataReader reader = cmd.ExecuteReader();
                 ReadTicketItems(reader, list, exactEsportMatch ? "esport" : "match");

@@ -1376,6 +1376,7 @@
         }
 
         function openTicketMatchModal(matchId, matchLabel) {
+            tmCurrentTicketType = 'football';
             tmCurrentMatch = matchId;
             const modal = document.getElementById('modalTicketMatch');
             if (!modal) return;

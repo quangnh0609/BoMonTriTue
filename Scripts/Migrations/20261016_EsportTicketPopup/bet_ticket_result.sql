@@ -16,7 +16,8 @@ CREATE OR ALTER PROC [dbo].[bet_ticket_result]
 	@dt NVARCHAR(MAX),
 	@zcInssert NVARCHAR(MAX) = '',
 	@isChampion BIT = 0,
-	@exactEsportMatch BIT = 0 -- Popup only: exact match_id, no other ticket sources
+	@exactEsportMatch BIT = 0, -- Esports popup only
+	@exactFootballMatch BIT = 0 -- Football popup only; both default to general search
 AS
 BEGIN
 	if isnull(@df, '') = '' or @df <= '20260720 12:00:00' set @df = '20260720 12:00:00'
@@ -39,7 +40,9 @@ BEGIN
 	-- Key
 	SET @Key = '1=1'
 	IF @user_id > 0 SET @Key = @Key + CASE WHEN @Key = '' THEN '' ELSE ' and ' END + 'a.user_id = ''' + REPLACE(STR(@user_id), ' ', '') + ''''
-	IF @match <> '' SET @Key = @Key + CASE WHEN @Key = '' THEN '' ELSE ' and ' END + '(a.match = ''' + @match + ''' or c.name like ''%' + @match + '%'')'
+	IF @exactFootballMatch = 1
+		SET @Key = @Key + ' and a.match = @popupMatch'
+	ELSE IF @match <> '' SET @Key = @Key + CASE WHEN @Key = '' THEN '' ELSE ' and ' END + '(a.match = ''' + @match + ''' or c.name like ''%' + @match + '%'')'
 	IF @season <> '' SET @Key = @Key + CASE WHEN @Key = '' THEN '' ELSE ' and ' END + 'b.season = ''' + @season + ''''
 	IF @clear <> '2' SET @Key = @Key + CASE WHEN @Key = '' THEN '' ELSE ' and ' END + 'isnull(a.clear, 0) = ''' + @clear + ''''
 	IF @result <> '2' SET @Key = @Key + CASE WHEN @Key = '' THEN '' ELSE ' and ' END + 'case when result_home is null then 0 else 1 end = ''' + @result + ''''
@@ -72,6 +75,9 @@ BEGIN
 	IF @exactEsportMatch = 1 AND (NULLIF(@match, '') IS NULL OR @isChampion = 1 OR @type <> '0')
 		THROW 50001, 'Exact esports mode requires a match and detail output.', 1;
 
+	IF @exactFootballMatch = 1 AND (NULLIF(@match, '') IS NULL OR @isChampion = 1 OR @type <> '0' OR @exactEsportMatch = 1)
+		THROW 50002, 'Exact football mode requires a match, detail output and no esports mode.', 1;
+
 	IF @exactEsportMatch = 0
 	BEGIN
 	-- data ticket match
@@ -82,10 +88,22 @@ BEGIN
 	SET @q = @q + CHAR(13) + ', '''', 0, 0, 0, 0, a.clear'
 	SET @q = @q + CHAR(13) + ', NULL, NULL'
 	SET @q = @q + CHAR(13) + 'from bet_ticket a join bet_match b on a.match = b.match and a.code = b.code'
-	SET @q = @q + CHAR(13) + 'join vbet_match_total c on a.match = c.match'
+	-- Exact lookup only needs match existence, not the status/name view.
+	SET @q = @q + CHAR(13) + CASE WHEN @exactFootballMatch = 1
+		THEN 'join bet_match_total c on a.match = c.match'
+		ELSE 'join vbet_match_total c on a.match = c.match' END
 	SET @q = @q + CHAR(13) + 'where ' + @Key
-	EXEC sp_executesql @q
-	
+	IF @exactFootballMatch = 1
+	BEGIN
+		SET @q = @q + CHAR(13) + 'OPTION (RECOMPILE)'
+		EXEC sp_executesql @q, N'@popupMatch NVARCHAR(MAX)', @popupMatch = @match
+	END
+	ELSE
+		EXEC sp_executesql @q
+	END -- Football source
+
+	IF @exactEsportMatch = 0 AND @exactFootballMatch = 0
+	BEGIN
 	-- data ticket champion
 	SET @q = 'insert into #report'
 	SET @q = @q + CHAR(13) + 'select 0, a.user_id, right(space(16) + season, 16) + convert(varchar(128), b.time, 112) + replace(str(a.id, 6), '' '', ''0''), b.season, b.team, '''', b.time, ''46'', ''H'', a.money'
@@ -108,8 +126,10 @@ BEGIN
 	SET @q = @q + CHAR(13) + 'where ' + @Key_payment
 	EXEC sp_executesql @q
 
-	END -- Other ticket sources are unnecessary for the esports popup.
+	END -- Champion/payment sources are unnecessary for either match popup.
 
+	IF @exactFootballMatch = 0
+	BEGIN
 	-- data ticket esports
 	-- Esports is loaded into #report before settlement and totals so it follows the same pipeline as matches/champions.
 	INSERT INTO #report (
@@ -211,6 +231,7 @@ BEGIN
 				AND (ISNULL(@dt, '') = '' OR REPLACE(REPLACE(REPLACE(CONVERT(VARCHAR(MAX), m.match_time, 120), '-', ''), ' ', ''), ':', '') <= REPLACE(REPLACE(REPLACE(@dt, '-', ''), ' ', ''), ':', ''))
 	
 	OPTION (RECOMPILE); -- Fold the mode/search predicates before choosing the access path.
+	END -- Esports source
 
 	-- result
 	UPDATE #report SET result_dif = CASE WHEN ticket IN ('O', 'U') THEN result_home + result_way - over_under ELSE result_home + handicap - result_way END
