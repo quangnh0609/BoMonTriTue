@@ -10,6 +10,8 @@ The Esports popup sends `ticketType: 'esport'`; `GetTicketList.aspx` then passes
 
 ## Deployment order (manual, not performed)
 
+The script now also reads the configurable tracking cutoff history. First apply `../20261016_TicketTrackingCutoff/01_history.sql`; see that folder's README. The old hard-coded cutoff is seeded once into history and then replaced by the latest declaration by ID.
+
 1. Compare the captured procedure with the target database definition to preserve any intervening changes; retain a rollback copy.
 2. Apply `bet_ticket_result.sql` to the intended application database.
 3. Deploy `GetTicketList.aspx`, `ucTicketMatch.ascx`, `esports.aspx` and `matches.aspx` together. Both optimized popup requests require the added SQL parameters, so deploy SQL first. If the earlier Esports-only script was already applied, reapply this updated script before deploying the football change.

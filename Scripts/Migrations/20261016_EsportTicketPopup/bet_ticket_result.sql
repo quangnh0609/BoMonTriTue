@@ -20,7 +20,27 @@ CREATE OR ALTER PROC [dbo].[bet_ticket_result]
 	@exactFootballMatch BIT = 0 -- Football popup only; both default to general search
 AS
 BEGIN
-	if isnull(@df, '') = '' or @df <= '20260720 12:00:00' set @df = '20260720 12:00:00'
+	-- Latest declaration wins, even when it moves the cutoff backwards.
+	DECLARE @trackingCutoff DATETIME2(0), @requestedFrom DATETIME2(0);
+	SELECT TOP (1) @trackingCutoff = cutoff_at
+	FROM dbo.bet_ticket_tracking_cutoff ORDER BY id DESC;
+	IF @trackingCutoff IS NULL
+		THROW 50005, 'Tracking cutoff history is not initialized.', 1;
+	IF NULLIF(@df, '') IS NOT NULL
+	BEGIN
+		-- TRY_CAST also supports databases below compatibility level 110.
+		SET @requestedFrom = TRY_CAST(@df AS DATETIME2(0));
+		-- tickets.aspx submits yyyyMMddHHmm; retain support for that existing format.
+		IF @requestedFrom IS NULL AND LEN(@df) IN (12, 14) AND @df NOT LIKE '%[^0-9]%'
+			SET @requestedFrom = TRY_CAST(
+				SUBSTRING(@df, 1, 4) + '-' + SUBSTRING(@df, 5, 2) + '-' + SUBSTRING(@df, 7, 2)
+				+ ' ' + SUBSTRING(@df, 9, 2) + ':' + SUBSTRING(@df, 11, 2) + ':'
+				+ CASE WHEN LEN(@df) = 14 THEN SUBSTRING(@df, 13, 2) ELSE '00' END AS DATETIME2(0));
+		IF @requestedFrom IS NULL THROW 50006, 'Invalid report start date.', 1;
+	END;
+	IF @requestedFrom IS NULL OR @requestedFrom < @trackingCutoff
+		SET @requestedFrom = @trackingCutoff;
+	SET @df = CONVERT(NVARCHAR(19), @requestedFrom, 120);
 	
 	-- Declare
 	DECLARE @q NVARCHAR(MAX), @Key NVARCHAR(MAX), @Key_champion NVARCHAR(MAX), @Key_payment NVARCHAR(MAX)
