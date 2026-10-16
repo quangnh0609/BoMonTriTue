@@ -48,8 +48,10 @@
 <script>
     let tmScrollPosition = 0;
     let tmCurrentMatch = '';
+    let tmCurrentTicketType = '';
 
-    function openTicketMatchModal(matchId, matchLabel) {
+    function openTicketMatchModal(matchId, matchLabel, ticketType) {
+        tmCurrentTicketType = ticketType || '';
         tmCurrentMatch = matchId;
         const modal = document.getElementById('modalTicketMatch');
         const label = document.getElementById('tmMatchLabel');
@@ -92,6 +94,7 @@
             body: JSON.stringify(champTicket || {
                 userId: '-2',
                 match: matchId,
+                ticketType: tmCurrentTicketType,
                 type: '0',
                 clear: '2',
                 result: '2',

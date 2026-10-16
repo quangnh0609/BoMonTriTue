@@ -1095,7 +1095,7 @@
                             <ItemTemplate>
                                 <div class="bg-white rounded-xl shadow-md border border-gray-200 p-4 flex flex-col transition-all hover:shadow-lg <%# GetEsportStatusTextClass(Eval("status")) %>">
                                     <div class="flex justify-end items-center gap-2 mb-3">
-                                        <button type="button" onclick="openTicketMatchModal('<%# Eval("match_id") %>', '<%# Eval("home") %> vs <%# Eval("way") %>')"
+                                        <button type="button" onclick="openTicketMatchModal('<%# Eval("match_id") %>', '<%# Eval("home") %> vs <%# Eval("way") %>', 'esport')"
                                             class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-[11px] transition-all">
                                             <i class="fa-solid fa-ticket mr-1"></i>Vé cược
                                         </button>
@@ -1419,7 +1419,7 @@
                 const matchLabel = `${m.home || ''} vs ${m.way || ''}`.replace(/'/g, "\\'");
                 html += `<div class="bg-white rounded-xl shadow-md border border-gray-200 p-4 flex flex-col transition-all hover:shadow-lg ${statusTextClass(m.status)}">
                     <div class="flex justify-end items-center gap-2 mb-3">
-                        <button type="button" onclick="openTicketMatchModal('${m.match_id}', '${matchLabel}')" class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-[11px] transition-all"><i class="fa-solid fa-ticket mr-1"></i>Vé cược</button>
+                        <button type="button" onclick="openTicketMatchModal('${m.match_id}', '${matchLabel}', 'esport')" class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-[11px] transition-all"><i class="fa-solid fa-ticket mr-1"></i>Vé cược</button>
                         ${canResult ? `<button type="button" onclick="openEsportResult('${m.match_id}')" class="bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded text-[11px] transition-all"><i class="fa-solid fa-flag-checkered mr-1"></i>Kết quả</button>` : ''}
                         ${canInsert ? `<button type="button" onclick="copyMatch('${m.match_id}')" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-[11px] transition-all"><i class="fa-solid fa-copy mr-1"></i>Sao chép</button>` : ''}
                         ${canManage ? `<button type="button" onclick="editMatch('${m.match_id}')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-[11px] transition-all"><i class="fa-solid fa-pen-to-square mr-1"></i>Sửa</button>` : ''}

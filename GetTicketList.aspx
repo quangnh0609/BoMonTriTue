@@ -36,6 +36,7 @@
             // Lấy giá trị từ request (đã có mặc định trong HTML)
             int userId = int.Parse(data["userId"]);
             string match = data["match"];
+            bool exactEsportMatch = data.ContainsKey("ticketType") && data["ticketType"] == "esport";
             string season = data.ContainsKey("season") ? data["season"] : "";
             string type = data["type"];
             string clear = data["clear"];
@@ -50,8 +51,12 @@
                 var list = new List<TicketItem>();
                 SqlCommand cmd = CreateTicketListCommand(conn, "bet_ticket_result", userId, match, season, type, clear, result, dateFrom, dateTo);
                 cmd.Parameters.Add("@zcInssert", SqlDbType.NVarChar).Value = "";
+                if (exactEsportMatch)
+                {
+                    cmd.Parameters.Add("@exactEsportMatch", SqlDbType.Bit).Value = true;
+                }
                 SqlDataReader reader = cmd.ExecuteReader();
-                ReadTicketItems(reader, list, "match");
+                ReadTicketItems(reader, list, exactEsportMatch ? "esport" : "match");
                 reader.Close();
 
                 string jsonResult = serializer.Serialize(list);
