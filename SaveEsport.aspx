@@ -224,6 +224,23 @@
 
     private object ParseDecimal(Dictionary<string, object> d, string key)
     {
+        string line = null;
+        switch (key)
+        {
+            case "ou_over_win": case "ou_under_win": line = "ou_line"; break;
+            case "hc_home_win": case "hc_way_win": line = "hc_line"; break;
+            case "minute_over_win": case "minute_under_win": line = "minute_line"; break;
+            case "dragon_ou_over_win": case "dragon_ou_under_win": line = "dragon_ou_line"; break;
+            case "dragon_hc_home_win": case "dragon_hc_way_win": line = "dragon_hc_line"; break;
+        }
+        if (line != null && ParseDecimal(d, line) != DBNull.Value)
+        {
+            object raw;
+            decimal rate;
+            if (!d.TryGetValue(key, out raw) || raw == null || String.IsNullOrWhiteSpace(raw.ToString()) ||
+                (decimal.TryParse(raw.ToString(), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out rate) && rate == 0))
+                return 0.9m;
+        }
         if (!d.ContainsKey(key)) return DBNull.Value;
         string v = (d[key] ?? "").ToString().Trim();
         if (string.IsNullOrEmpty(v)) return DBNull.Value;

@@ -1,0 +1,20 @@
+<div id="webMatchFilter" class="hidden fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="webMatchFilterTitle">
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-5 max-h-[90vh] overflow-auto">
+    <h3 id="webMatchFilterTitle" class="font-bold text-lg mb-4">Lấy trận đấu từ web</h3>
+    <p id="webMatchFilterQuota" class="text-xs text-gray-500 mb-3" aria-live="polite">Credits còn lại: — / — · Reset: —</p>
+    <div class="mb-4"><span class="block text-sm mb-2">Ngày thi đấu</span><div id="webMatchDays" role="group" aria-label="Ngày thi đấu" class="grid grid-cols-7 gap-1"></div></div>
+    <label class="block text-sm mb-3">Giải đấu<select id="webMatchLeague" class="block w-full border rounded-lg p-2 mt-1"><option value="">Chọn giải đấu</option></select></label>
+    <p id="webMatchFilterMessage" role="status" class="text-sm text-red-600 my-3"></p>
+    <div class="flex justify-end gap-2"><button id="webMatchFilterClose" type="button" class="px-4 py-2 border rounded-lg">Đóng</button><button id="webMatchSearch" type="button" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Lọc</button></div>
+  </div>
+</div>
+<div id="webMatchResults" class="hidden fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="webMatchResultsTitle">
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-5xl p-5 max-h-[90vh] flex flex-col">
+    <h3 id="webMatchResultsTitle" class="font-bold text-lg mb-2">Chọn trận đấu để tạo</h3>
+    <p id="webMatchResultsQuota" class="text-xs text-gray-500 mb-3" aria-live="polite">Credits còn lại: — / — · Reset: —</p>
+    <label class="text-sm mb-2"><input id="webMatchSelectAll" type="checkbox"> Chọn tất cả</label>
+    <div id="webMatchList" class="overflow-auto flex-1 border rounded-lg"></div>
+    <p id="webMatchResultsMessage" role="status" class="text-sm my-3"></p>
+    <div class="flex justify-end gap-2"><button id="webMatchBack" type="button" class="px-4 py-2 border rounded-lg">Lọc lại</button><button id="webMatchResultsClose" type="button" class="px-4 py-2 border rounded-lg">Đóng</button><button id="webMatchCreate" type="button" class="px-4 py-2 bg-blue-600 text-white rounded-lg" disabled>Tạo trận đấu</button></div>
+  </div>
+</div>

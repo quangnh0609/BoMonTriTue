@@ -564,6 +564,9 @@
             const el = document.getElementById('g' + gameNum + '_' + f);
             g[f] = el ? el.value.trim() : '';
         });
+        ESPORT_DEFAULT_RATE_FIELDS.forEach(function(f) {
+            if (g[f] === '' || Number(g[f]) === 0) g[f] = '0.9';
+        });
         return g;
     }
 
@@ -583,6 +586,7 @@
     function isGameEmpty(gameData) {
         return GAME_FIELDS.every(function(f) {
             if (ESPORT_DEFAULT_RATE_FIELDS.includes(f) && parseFloat(gameData[f]) === 0.9) return true;
+            if (DRAGON_TYPE_FIELDS.some(item => item.field === f) && parseFloat(gameData[f]) === 5.5) return true;
             return !gameData[f];
         });
     }
@@ -683,10 +687,20 @@
 
     function prepareNewEsportForm() {
         clearEsportForm();
+        applyEsportDragonDefaults();
         for (let i = 1; i <= 6; i++) {
             ESPORT_DEFAULT_RATE_FIELDS.forEach(function(f) {
                 const el = document.getElementById('g' + i + '_' + f);
                 if (el) el.value = '0.9';
+            });
+        }
+    }
+
+    function applyEsportDragonDefaults() {
+        for (let i = 1; i <= 5; i++) {
+            DRAGON_TYPE_FIELDS.forEach(function(item) {
+                const el = document.getElementById('g' + i + '_' + item.field);
+                if (el && (el.value.trim() === '' || Number(el.value) === 0)) el.value = '5.5';
             });
         }
     }
@@ -727,6 +741,12 @@
                         if (el && g[f] !== null && g[f] !== undefined) el.value = g[f];
                     });
                 }
+            });
+        }
+        for (let i = 1; i <= 6; i++) {
+            ESPORT_DEFAULT_RATE_FIELDS.forEach(function(f) {
+                const el = document.getElementById('g' + i + '_' + f);
+                if (el && (el.value.trim() === '' || Number(el.value) === 0)) el.value = '0.9';
             });
         }
         const title = document.getElementById('esportModalTitle');

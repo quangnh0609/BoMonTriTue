@@ -1504,6 +1504,7 @@
                     fillEsportEditForm(matchData);
                     document.getElementById('esport_match_id').value = '';
                     document.getElementById('esport_edit_yn').value = 'false';
+                    applyEsportDragonDefaults();
                     const title = document.getElementById('esportModalTitle');
                     if (title) title.innerHTML = '<i class="fa-solid fa-gamepad mr-3 text-lg"></i> Sao chép trận Esports';
                     openAddEsportModalUI();

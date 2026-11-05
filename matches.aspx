@@ -17,6 +17,7 @@
         }
 
         if (!IsPostBack) { 
+            if (Session["WebMatchToken"] == null) Session["WebMatchToken"] = Guid.NewGuid().ToString("N");
             BindMatchTable();
 			LoadSmartData();
         }
@@ -875,13 +876,16 @@
 					</div>
 				</div>
 				
-				<div class="flex-none p-3 lg:p-6 pb-0">
+				<div class="flex-none p-3 lg:p-6 pb-0 flex items-center gap-2">
 					<% if (CheckRight("bet_match_insert")) { %>
 					<button type="button" onclick="openAddMatchModalNew()" 
 						class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl shadow-lg flex items-center transition-all active:scale-95 group border-2 border-white">
 						<i class="fa-solid fa-plus mr-2 group-hover:rotate-90 transition-transform"></i>
 						<span class="font-bold text-[11px] lg:text-xs tracking-wide">Thêm trận</span>
 					</button>
+					<% if (IsAdminUser()) { %>
+					<button type="button" onclick="webMatchOpen()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl shadow-lg font-bold text-xs whitespace-nowrap"><i class="fa-solid fa-globe mr-2"></i>Lấy từ web</button>
+					<% } %>
 					<% } %>
 				</div>
 				
@@ -1015,6 +1019,9 @@
         </div>
 		
 		<uc:AddMatch runat="server" ID="ucAddMatch" OnMatchAdded="ucAddMatch_MatchAdded" />
+		<!--#include file="WebMatchDialogs.html" -->
+        <script>window.webMatchToken = '<%= Session["WebMatchToken"] %>';</script>
+        <script src="Scripts/web-match-import.js"></script>
 		<uc:ResultMatch runat="server" ID="ucResultMatch" />
 		<uc:TicketMatch runat="server" ID="ucTicketMatch" />
     </form>
