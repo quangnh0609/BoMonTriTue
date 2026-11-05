@@ -15,3 +15,7 @@ Ghép hai cửa cùng nhà cái, cùng mốc; handicap Home x với Away -x. Lư
 Snapshot lưu session 15 phút; kiểm tra token, quyền, ID thuộc snapshot, giờ bắt đầu và trùng trận. Tạo nhiều trận trong transaction; lỗi một trận rollback cả lần tạo. Mã ổn định băm SHA256 dài 16 ký tự, tiền tố OM/OL/OT cho trận/giải/đội. Đội và giải tìm theo tên chính xác trước khi thêm. Tên khác ngôn ngữ cần đối chiếu thủ công. Ghi bet_match có tham số, trigger cập nhật bet_match_total và gán người tạo.
 
 Đã chạy 107 assertions (ghép cặp, giá, payout, làm tròn, request ArrayList, mã, 5 ví dụ H1, ưu tiên H1 nguồn, chấp âm/0, cấu hình sai, ưu tiên kèo chính), biên dịch backend, kiểm tra cú pháp JS và nút ngày qua chuyển tháng/năm. Chưa kiểm thử tích hợp API/IIS/SQL cho thay đổi này.
+
+## Đối chiếu đội trước khi tạo
+
+Khi bấm tạo, backend kiểm tra mã OT nguồn trước, rồi tên đội bằng phép so sánh SQL (=, phụ thuộc collation). Không dùng tìm gần đúng/tên viết tắt. Chỉ tự ghép nếu mã nguồn tồn tại hoặc đúng một đội khớp tên. Không khớp hoặc nhiều đội cùng tên sẽ trả needsTeams trước mọi ghi dữ liệu. Popup cho tìm đội theo tên/mã và chọn thủ công; trường hợp không tìm thấy có lựa chọn rõ ràng Tạo đội mới. Bỏ trống không được tự tạo. Backend kiểm tra mã đội đã chọn còn tồn tại, kiểm tra cả hai đội không trùng và vẫn chống trùng trận trong transaction. Chọn tay chỉ áp dụng cho lần nhập hiện tại; chưa lưu bảng alias lâu dài. Giải đấu vẫn xử lý theo cơ chế trước. Test giao diện: node Program/Tests/web-match-team-dialog.test.cjs. Chưa chạy tích hợp SQL cho luồng này.

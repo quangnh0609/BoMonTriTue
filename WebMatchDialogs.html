@@ -8,6 +8,14 @@
     <div class="flex justify-end gap-2"><button id="webMatchFilterClose" type="button" class="px-4 py-2 border rounded-lg">Đóng</button><button id="webMatchSearch" type="button" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Lọc</button></div>
   </div>
 </div>
+<div id="webMatchTeams" class="hidden fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="webMatchTeamsTitle">
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-5 max-h-[90vh] flex flex-col">
+    <h3 id="webMatchTeamsTitle" class="font-bold text-lg mb-3">Đối chiếu đội bóng</h3>
+    <div id="webMatchTeamList" class="overflow-auto flex-1 space-y-4"></div>
+    <p id="webMatchTeamsMessage" role="status" class="text-sm text-red-600 my-3"></p>
+    <div class="flex justify-end gap-2"><button id="webMatchTeamsBack" type="button" class="px-4 py-2 border rounded-lg">Quay lại</button><button id="webMatchTeamsCreate" type="button" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Tiếp tục tạo trận</button></div>
+  </div>
+</div>
 <div id="webMatchResults" class="hidden fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="webMatchResultsTitle">
   <div class="bg-white rounded-2xl shadow-xl w-full max-w-5xl p-5 max-h-[90vh] flex flex-col">
     <h3 id="webMatchResultsTitle" class="font-bold text-lg mb-2">Chọn trận đấu để tạo</h3>

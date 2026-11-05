@@ -110,6 +110,75 @@
         { cmd.Parameters.AddWithValue("@code", code); cmd.Parameters.AddWithValue("@name", name); cmd.ExecuteNonQuery(); }
         return code;
     }
+    Dictionary<string, string> ResolveTeams(SqlConnection conn, SqlTransaction tx, IEnumerable<WebMatchImport.Fixture> fixtures, Dictionary<string, object> input)
+    {
+        object rawChoices;
+        var choices = input.TryGetValue("teamChoices", out rawChoices) ? rawChoices as Dictionary<string, object> : null;
+        object rawCodes;
+        var newCodes = input.TryGetValue("newTeamCodes", out rawCodes) ? rawCodes as Dictionary<string, object> : null;
+        var newTeams = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var names = new Dictionary<string, string>();
+        foreach (var fixture in fixtures)
+        {
+            names[WebMatchImport.CompactId("OT", fixture.HomeId)] = fixture.Home;
+            names[WebMatchImport.CompactId("OT", fixture.AwayId)] = fixture.Away;
+        }
+        var resolved = new Dictionary<string, string>();
+        var missing = new List<object>();
+        foreach (var entry in names)
+        {
+            string selected = choices == null ? "" : WebMatchImport.Str(choices, entry.Key);
+            if (selected != "" && selected != "__new__")
+            {
+                using (var cmd = new SqlCommand("SELECT team FROM dbo.bet_team WITH (UPDLOCK,HOLDLOCK) WHERE team=@team", conn, tx))
+                {
+                    cmd.Parameters.AddWithValue("@team", selected);
+                    object found = cmd.ExecuteScalar();
+                    if (found == null) throw new InvalidOperationException("Đội được chọn không còn tồn tại. Vui lòng chọn lại.");
+                    resolved[entry.Key] = found.ToString().Trim();
+                }
+                continue;
+            }
+            var matches = new List<string>();
+            using (var cmd = new SqlCommand("SELECT TOP 2 team FROM dbo.bet_team WITH (UPDLOCK,HOLDLOCK) WHERE team=@code OR team_name=@name ORDER BY CASE WHEN team=@code THEN 0 ELSE 1 END, team", conn, tx))
+            {
+                cmd.Parameters.AddWithValue("@code", entry.Key); cmd.Parameters.AddWithValue("@name", entry.Value);
+                using (var reader = cmd.ExecuteReader()) while (reader.Read()) matches.Add(reader[0].ToString().Trim());
+            }
+            if (matches.Contains(entry.Key)) resolved[entry.Key] = entry.Key;
+            else if (matches.Count == 1) resolved[entry.Key] = matches[0];
+            else if (selected == "__new__" && matches.Count == 0)
+            {
+                string code = newCodes == null ? "" : WebMatchImport.Str(newCodes, entry.Key).Trim();
+                if (!System.Text.RegularExpressions.Regex.IsMatch(code, @"^[A-Za-z0-9_-]{1,16}$"))
+                    throw new InvalidOperationException("Nhập mã đội cho " + entry.Value + ": 1–16 ký tự, gồm chữ không dấu, số, dấu - hoặc _.");
+                if (newTeams.ContainsKey(code)) throw new InvalidOperationException("Mã đội " + code + " đang được dùng cho nhiều đội mới.");
+                using (var cmd = new SqlCommand("SELECT COUNT(1) FROM dbo.bet_team WITH (UPDLOCK,HOLDLOCK) WHERE team=@code", conn, tx))
+                {
+                    cmd.Parameters.AddWithValue("@code", code);
+                    if (Convert.ToInt32(cmd.ExecuteScalar()) > 0) throw new InvalidOperationException("Mã đội " + code + " đã tồn tại. Chọn đội đang có hoặc nhập mã khác.");
+                }
+                newTeams[code] = entry.Value;
+                resolved[entry.Key] = code;
+            }
+            else missing.Add(new { key = entry.Key, name = entry.Value, ambiguous = matches.Count > 1 });
+        }
+        if (missing.Count > 0)
+        {
+            var teams = new List<object>();
+            using (var cmd = new SqlCommand("SELECT RTRIM(team) AS team, team_name FROM dbo.bet_team ORDER BY team_name, team", conn, tx))
+            using (var reader = cmd.ExecuteReader())
+                while (reader.Read()) teams.Add(new { id = reader["team"].ToString(), name = reader["team_name"].ToString() });
+            Reply(new { ok = true, needsTeams = true, requiredTeams = missing, teams = teams });
+            return null;
+        }
+        foreach (var team in newTeams)
+        using (var cmd = new SqlCommand("INSERT INTO dbo.bet_team (team,team_name) VALUES (@code,@name)", conn, tx))
+        {
+            cmd.Parameters.AddWithValue("@code", team.Key); cmd.Parameters.AddWithValue("@name", team.Value); cmd.ExecuteNonQuery();
+        }
+        return resolved;
+    }
     void Create(Dictionary<string, object> input)
     {
         var results = Session["WebMatchResults"] as Dictionary<string, WebMatchImport.Fixture>;
@@ -121,13 +190,17 @@
         {
             conn.Open(); using (var tx = conn.BeginTransaction(IsolationLevel.Serializable))
             {
+                var resolvedTeams = ResolveTeams(conn, tx, ids.Select(id => results[id]), input);
+                if (resolvedTeams == null) return;
                 foreach (string id in ids)
                 {
                     var f = results[id];
                     if (!WebMatchImport.IsAllowedLeague(f.LeagueId)) throw new InvalidOperationException("Danh sách có giải không được hỗ trợ. Vui lòng lọc lại.");
                     if (f.Kickoff <= DateTimeOffset.UtcNow) throw new InvalidOperationException("Có trận đã bắt đầu. Vui lòng lọc lại.");
                     string season = Entity(conn, tx, false, WebMatchImport.CompactId("OL", f.LeagueId), f.League);
-                    string home = Entity(conn, tx, true, WebMatchImport.CompactId("OT", f.HomeId), f.Home), away = Entity(conn, tx, true, WebMatchImport.CompactId("OT", f.AwayId), f.Away);
+                    string homeKey = WebMatchImport.CompactId("OT", f.HomeId), awayKey = WebMatchImport.CompactId("OT", f.AwayId);
+                    string home = resolvedTeams[homeKey], away = resolvedTeams[awayKey];
+                    if (home == away) throw new InvalidOperationException("Hai đội của trận " + f.Home + " – " + f.Away + " không được trùng nhau.");
                     using (var cmd = new SqlCommand("SELECT COUNT(*) FROM bet_match WITH (UPDLOCK,HOLDLOCK) WHERE match=@id OR (season=@season AND home=@home AND way=@away AND time=@time)", conn, tx))
                     {
                         cmd.Parameters.AddWithValue("@id", WebMatchImport.CompactId("OM", id)); cmd.Parameters.AddWithValue("@season", season); cmd.Parameters.AddWithValue("@home", home); cmd.Parameters.AddWithValue("@away", away); cmd.Parameters.AddWithValue("@time", f.Kickoff.ToOffset(TimeSpan.FromHours(7)).DateTime);
