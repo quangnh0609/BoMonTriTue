@@ -1,4 +1,4 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true" %>
+<%@ Page Language="C#" AutoEventWireup="true" %>
 <%@ Import Namespace="System.Data" %>
 <%@ Import Namespace="System.Data.SqlClient" %>
 <%@ Import Namespace="System.Configuration" %>
@@ -147,29 +147,34 @@
             using (SqlConnection conn = new SqlConnection(connStr))
             {
                 conn.Open();
-                SqlCommand cmd = new SqlCommand("bet_match_insert", conn);
-                cmd.CommandType = CommandType.StoredProcedure;
-                cmd.Parameters.AddWithValue("@match",   string.IsNullOrEmpty(data.match) ? (object)DBNull.Value : data.match);
-                cmd.Parameters.AddWithValue("@season",  data.season);
-                cmd.Parameters.AddWithValue("@time",    parsedTime.HasValue ? (object)parsedTime.Value : DBNull.Value);
-                cmd.Parameters.AddWithValue("@home",    data.home);
-                cmd.Parameters.AddWithValue("@way",     data.way);
-                cmd.Parameters.AddWithValue("@details", details.ToString());
-                cmd.Parameters.AddWithValue("@userID",  Session["UserID"]);
-                cmd.Parameters.AddWithValue("@edit",    isEdit);
-
-                SqlDataReader reader = cmd.ExecuteReader();
-                int isSuccess = 0;
-                string msg = "";
-                if (reader.Read())
+                using (var tx = conn.BeginTransaction())
                 {
-                    isSuccess = reader["isSuccess"] != DBNull.Value ? Convert.ToInt32(reader["isSuccess"]) : 0;
-                    msg       = reader["msg"]       != DBNull.Value ? reader["msg"].ToString() : "Có lỗi xảy ra";
-                }
-                else { msg = "Stored procedure không trả về kết quả"; }
-                reader.Close();
+                    CatalogState.RequireActive(conn, tx, data.season, new[] { data.home, data.way });
+                    SqlCommand cmd = new SqlCommand("bet_match_insert", conn, tx);
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@match",   string.IsNullOrEmpty(data.match) ? (object)DBNull.Value : data.match);
+                    cmd.Parameters.AddWithValue("@season",  data.season);
+                    cmd.Parameters.AddWithValue("@time",    parsedTime.HasValue ? (object)parsedTime.Value : DBNull.Value);
+                    cmd.Parameters.AddWithValue("@home",    data.home);
+                    cmd.Parameters.AddWithValue("@way",     data.way);
+                    cmd.Parameters.AddWithValue("@details", details.ToString());
+                    cmd.Parameters.AddWithValue("@userID",  Session["UserID"]);
+                    cmd.Parameters.AddWithValue("@edit",    isEdit);
 
-                Response.Write("{\"isSuccess\":" + isSuccess + ",\"msg\":\"" + msg.Replace("\"", "\\\"") + "\"}");
+                    SqlDataReader reader = cmd.ExecuteReader();
+                    int isSuccess = 0;
+                    string msg = "";
+                    if (reader.Read())
+                    {
+                        isSuccess = reader["isSuccess"] != DBNull.Value ? Convert.ToInt32(reader["isSuccess"]) : 0;
+                        msg       = reader["msg"]       != DBNull.Value ? reader["msg"].ToString() : "Có lỗi xảy ra";
+                    }
+                    else { msg = "Stored procedure không trả về kết quả"; }
+                    reader.Close();
+                    if (isSuccess == 1) tx.Commit(); else tx.Rollback();
+
+                    Response.Write("{\"isSuccess\":" + isSuccess + ",\"msg\":\"" + msg.Replace("\"", "\\\"") + "\"}");
+                }
             }
         }
         catch (Exception ex)

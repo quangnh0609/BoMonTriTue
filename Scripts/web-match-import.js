@@ -106,26 +106,42 @@
     };
     function renderTeamChoices(data) {
         requiredTeams = data.requiredTeams; el('webMatchTeamList').replaceChildren();
-        requiredTeams.forEach(team => {
+        requiredTeams.forEach((team, index) => {
+            const kind = team.kind || 'đội';
+            const candidates = team.candidates || [], all = team.allOptions || [];
+            let pool = candidates.length ? candidates : all;
             const row = document.createElement('div');
             const label = document.createElement('label'); label.className = 'block font-semibold text-sm mb-1';
-            label.htmlFor = 'teamChoice_' + team.key;
-            label.textContent = team.name + (team.ambiguous ? ' — Có nhiều đội trùng tên' : ' — Chưa tìm thấy đội');
-            const search = document.createElement('input'); search.type = 'search'; search.placeholder = 'Tìm đội theo tên hoặc mã'; search.className = 'w-full border rounded-lg p-2 mb-2 text-sm'; search.setAttribute('aria-label', 'Tìm đội cho ' + team.name);
+            label.htmlFor = 'entityChoice_' + index;
+            label.textContent = (kind === 'giải' ? 'Giải đấu: ' : 'Đội: ') + team.name;
+            const search = document.createElement('input'); search.type = 'search'; search.placeholder = 'Tìm ' + kind + ' theo tên hoặc mã'; search.className = 'w-full border rounded-lg p-2 mb-2 text-sm'; search.setAttribute('aria-label', 'Tìm ' + kind + ' cho ' + team.name);
             const select = document.createElement('select'); select.id = label.htmlFor; select.className = 'w-full border rounded-lg p-2 text-sm';
             const add = (value, text) => { const option = document.createElement('option'); option.value = value; option.textContent = text; select.appendChild(option); };
-            add('', 'Chọn đội đang có hoặc tạo đội mới');
-            if (!team.ambiguous) add('__new__', 'Không chọn thủ công — Tạo đội mới: ' + team.name);
-            data.teams.forEach(t => add(t.id, t.name + ' (' + t.id + ')'));
-            select.value = teamChoices[team.key] || '';
             const codeInput = document.createElement('input'); codeInput.type = 'text'; codeInput.maxLength = 16;
-            codeInput.placeholder = 'Mã đội mới (tối đa 16 ký tự)'; codeInput.value = newTeamCodes[team.key] || '';
-            codeInput.className = 'w-full border rounded-lg p-2 mt-2 text-sm'; codeInput.setAttribute('aria-label', 'Mã đội mới cho ' + team.name);
-            codeInput.hidden = select.value !== '__new__';
+            codeInput.placeholder = 'Mã ' + kind + ' mới (tối đa 16 ký tự)'; codeInput.value = newTeamCodes[team.key] || '';
+            codeInput.className = 'w-full border rounded-lg p-2 mt-2 text-sm'; codeInput.setAttribute('aria-label', 'Mã ' + kind + ' mới cho ' + team.name);
+            const normalize = text => String(text).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
+            const renderOptions = () => {
+                const term = normalize(search.value.trim()), previous = teamChoices[team.key] || '';
+                const filtered = pool.filter(t => normalize(t.name + ' ' + t.id).includes(term));
+                select.replaceChildren();
+                add('', filtered.length ? 'Chọn ' + kind + ' đang có hoặc tạo mới' : 'Không tìm thấy ' + kind + ' phù hợp');
+                add('__new__', 'Không chọn thủ công — Tạo ' + kind + ' mới: ' + team.name);
+                filtered.forEach(t => add(t.id, t.name + ' (' + t.id + ')'));
+                const chosen = all.find(t => t.id === previous);
+                if (chosen && !filtered.some(t => t.id === previous)) add(chosen.id, chosen.name + ' (' + chosen.id + ')');
+                select.value = previous === '__new__' || filtered.some(t => t.id === previous) || chosen ? previous : '';
+                teamChoices[team.key] = select.value;
+                codeInput.hidden = select.value !== '__new__';
+                select.size = Math.min(6, select.options.length);
+            };
+            renderOptions();
             codeInput.oninput = () => { newTeamCodes[team.key] = codeInput.value.trim(); };
             select.onchange = () => { teamChoices[team.key] = select.value; codeInput.hidden = select.value !== '__new__'; if (!codeInput.hidden) codeInput.focus(); };
-            search.oninput = () => { const term = search.value.trim().toLocaleLowerCase('vi'); Array.from(select.options).forEach(o => { o.hidden = !!o.value && o.value !== '__new__' && o.value !== select.value && !o.textContent.toLocaleLowerCase('vi').includes(term); }); };
-            row.append(label, search, select, codeInput); el('webMatchTeamList').appendChild(row);
+            search.oninput = renderOptions;
+            const manual = document.createElement('button'); manual.type = 'button'; manual.className = 'text-blue-600 text-sm mt-2'; manual.textContent = 'Chọn thủ công từ toàn bộ danh sách'; manual.hidden = !candidates.length;
+            manual.onclick = () => { if (busy) return; pool = all; search.value = ''; manual.hidden = true; renderOptions(); search.focus(); };
+            row.append(label, search, select, codeInput, manual); el('webMatchTeamList').appendChild(row);
         });
         el('webMatchTeamsMessage').textContent = ''; show('webMatchTeams');
     }
@@ -145,11 +161,11 @@
     };
     el('webMatchTeamsCreate').onclick = async function () {
         if (busy) return;
-        if (requiredTeams.some(t => !teamChoices[t.key])) { el('webMatchTeamsMessage').textContent = 'Chọn cách xử lý cho từng đội trước khi tiếp tục.'; return; }
+        if (requiredTeams.some(t => !teamChoices[t.key])) { el('webMatchTeamsMessage').textContent = 'Chọn cách xử lý cho từng đội/giải trước khi tiếp tục.'; return; }
         const creating = requiredTeams.filter(t => teamChoices[t.key] === '__new__');
         const invalid = creating.find(t => !/^[A-Za-z0-9_-]{1,16}$/.test(newTeamCodes[t.key] || ''));
-        if (invalid) { el('webMatchTeamsMessage').textContent = 'Nhập mã đội cho ' + invalid.name + ': 1–16 ký tự, gồm chữ không dấu, số, dấu - hoặc _.'; return; }
-        if (new Set(creating.map(t => newTeamCodes[t.key].toUpperCase())).size !== creating.length) { el('webMatchTeamsMessage').textContent = 'Mã các đội mới không được trùng nhau.'; return; }
+        if (invalid) { el('webMatchTeamsMessage').textContent = 'Nhập mã ' + (invalid.kind || 'đội') + ' cho ' + invalid.name + ': 1–16 ký tự, gồm chữ không dấu, số, dấu - hoặc _.'; return; }
+        if (new Set(creating.map(t => (t.kind || 'đội') + ':' + newTeamCodes[t.key].toUpperCase())).size !== creating.length) { el('webMatchTeamsMessage').textContent = 'Mã các đội hoặc giải mới không được trùng trong cùng loại.'; return; }
         await createMatches('webMatchTeamsMessage');
     };
     el('webMatchTeamsBack').onclick = () => { if (!busy) show('webMatchResults'); };

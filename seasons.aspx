@@ -1,4 +1,4 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true" CodePage="65001" %>
+<%@ Page Language="C#" AutoEventWireup="true" CodePage="65001" %>
 <%@ Register Src="~/ucSidebar.ascx" TagPrefix="uc" TagName="Sidebar" %>
 <%@ Register Src="~/ucPageHeaderInfo.ascx" TagPrefix="uc" TagName="PageHeaderInfo" %>
 <%@ Import Namespace="System.Data" %>
@@ -67,9 +67,11 @@
                     SELECT season FROM bet_match WHERE season IS NOT NULL
                     UNION
                     SELECT season FROM bet_esport_match WHERE season IS NOT NULL
+                    UNION
+                    SELECT season FROM bet_champion WHERE season IS NOT NULL
                 )
                 SELECT RTRIM(LTRIM(s.season)) AS season,
-                       s.season_name,
+                       s.season_name, s.is_active,
                        CAST(CASE WHEN u.season IS NULL THEN 0 ELSE 1 END AS BIT) AS is_used
                 FROM bet_season s
                 LEFT JOIN used_season u ON u.season = s.season
@@ -191,6 +193,22 @@
 
     protected void gvSeasons_RowCommand(object sender, GridViewCommandEventArgs e)
     {
+        if (e.CommandName == "ToggleActive")
+        {
+            if (!IsAdminUser()) return;
+            try
+            {
+                using (var conn = new SqlConnection(ConfigurationManager.ConnectionStrings["MyDbConn"].ConnectionString))
+                using (var cmd = new SqlCommand("UPDATE dbo.bet_season SET is_active = CASE WHEN is_active=1 THEN 0 ELSE 1 END WHERE season=@code", conn))
+                {
+                    cmd.Parameters.Add("@code", SqlDbType.Char, 16).Value = NormalizeCode(Convert.ToString(e.CommandArgument));
+                    conn.Open(); cmd.ExecuteNonQuery();
+                }
+                BindSeasonTable(); ShowMessage("Đã cập nhật trạng thái.", true);
+            }
+            catch { ShowMessage("Không thể cập nhật trạng thái.", false); }
+            return;
+        }
         if (e.CommandName != "DeleteSeason") return;
 
         string code = NormalizeCode(e.CommandArgument.ToString());
@@ -256,6 +274,7 @@
         string sql = @"
             SELECT CASE WHEN EXISTS (SELECT 1 FROM bet_match WHERE season = @season)
                          OR EXISTS (SELECT 1 FROM bet_esport_match WHERE season = @season)
+                         OR EXISTS (SELECT 1 FROM bet_champion WHERE season = @season)
                         THEN 1 ELSE 0 END";
         return ExecuteCount(sql, "@season", code) != 0;
     }
@@ -385,6 +404,10 @@
                                         class="h-9 w-9 shrink-0 rounded border border-blue-100 text-blue-600 hover:bg-blue-50 hover:text-blue-800">
                                         <i class="fa-solid fa-pen-to-square"></i>
                                     </button>
+                                    <asp:LinkButton ID="btnToggleActive" runat="server" CommandName="ToggleActive"
+                                        CommandArgument='<%# Eval("season") %>' OnClientClick="persistSeasonFilter();"
+                                        Text='<%# Convert.ToBoolean(Eval("is_active")) ? "Ẩn" : "Kích hoạt" %>'
+                                        CssClass="inline-flex h-9 shrink-0 items-center justify-center rounded border px-2 text-xs text-amber-700 hover:bg-amber-50" />
                                     <asp:LinkButton ID="btnDeleteSeason" runat="server" CommandName="DeleteSeason"
                                         CommandArgument='<%# Eval("season") %>' OnClientClick="persistSeasonFilter(); return confirm('Xóa mùa giải này?');"
                                         ToolTip="Xóa" Visible='<%# !Convert.ToBoolean(Eval("is_used")) %>'
@@ -408,6 +431,7 @@
                                             <span class="min-w-0 text-gray-700"><%# Eval("season_name") %></span>
                                         </div>
                                         <div>
+                                            <span class="inline-flex rounded bg-blue-50 px-2 py-1 text-xs font-bold text-blue-700"><%# Convert.ToBoolean(Eval("is_active")) ? "Đang hoạt động" : "Đã ẩn" %></span>
                                             <span class="<%# Convert.ToBoolean(Eval("is_used")) ? "inline-flex rounded bg-amber-100 px-2 py-1 text-xs font-bold text-amber-700" : "inline-flex rounded bg-gray-100 px-2 py-1 text-xs font-bold text-gray-600" %>">
                                                 <%# Convert.ToBoolean(Eval("is_used")) ? "Đã phát sinh" : "Chưa dùng" %>
                                             </span>

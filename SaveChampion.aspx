@@ -1,4 +1,4 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true" %>
+<%@ Page Language="C#" AutoEventWireup="true" %>
 <%@ Import Namespace="System.Data" %>
 <%@ Import Namespace="System.Data.SqlClient" %>
 <%@ Import Namespace="System.Configuration" %>
@@ -139,27 +139,34 @@
             using (SqlConnection conn = new SqlConnection(connStr))
             {
                 conn.Open();
-                string sql = "exec bet_champion_insert @season=@season, @time=@time, @time_lock=@time_lock, @details=@details, @userID=@userID, @edit=@edit, @name=@name";
-                SqlCommand cmd = new SqlCommand(sql, conn);
-                cmd.Parameters.AddWithValue("@season",    data.season);
-                cmd.Parameters.AddWithValue("@time",      parsedTime.HasValue ? (object)parsedTime.Value : DBNull.Value);
-                cmd.Parameters.AddWithValue("@time_lock", parsedTimeLock.HasValue ? (object)parsedTimeLock.Value : DBNull.Value);
-                cmd.Parameters.AddWithValue("@name",      string.IsNullOrWhiteSpace(data.name) ? (object)DBNull.Value : data.name.Trim());
-                cmd.Parameters.AddWithValue("@details",   detailsXml.ToString());
-                cmd.Parameters.AddWithValue("@userID",    Session["UserID"]);
-                cmd.Parameters.AddWithValue("@edit",      isEdit);
-                
-                SqlDataReader reader = cmd.ExecuteReader();
-                int isSuccess = 0; string msg = "";
-                if (reader.Read())
+                using (var tx = conn.BeginTransaction())
                 {
-                    isSuccess = reader["isSuccess"] != DBNull.Value ? Convert.ToInt32(reader["isSuccess"]) : 0;
-                    msg       = reader["msg"]       != DBNull.Value ? reader["msg"].ToString() : "Có lỗi xảy ra";
-                }
-                else { msg = "Stored procedure không trả về kết quả"; }
-                reader.Close();
+                    var selectedTeams = new List<string>();
+                    if (data.details != null) foreach (var detail in data.details) if (!String.IsNullOrWhiteSpace(detail.team)) selectedTeams.Add(detail.team);
+                    CatalogState.RequireActive(conn, tx, data.season, selectedTeams);
+                    string sql = "exec bet_champion_insert @season=@season, @time=@time, @time_lock=@time_lock, @details=@details, @userID=@userID, @edit=@edit, @name=@name";
+                    SqlCommand cmd = new SqlCommand(sql, conn, tx);
+                    cmd.Parameters.AddWithValue("@season",    data.season);
+                    cmd.Parameters.AddWithValue("@time",      parsedTime.HasValue ? (object)parsedTime.Value : DBNull.Value);
+                    cmd.Parameters.AddWithValue("@time_lock", parsedTimeLock.HasValue ? (object)parsedTimeLock.Value : DBNull.Value);
+                    cmd.Parameters.AddWithValue("@name",      string.IsNullOrWhiteSpace(data.name) ? (object)DBNull.Value : data.name.Trim());
+                    cmd.Parameters.AddWithValue("@details",   detailsXml.ToString());
+                    cmd.Parameters.AddWithValue("@userID",    Session["UserID"]);
+                    cmd.Parameters.AddWithValue("@edit",      isEdit);
+                
+                    SqlDataReader reader = cmd.ExecuteReader();
+                    int isSuccess = 0; string msg = "";
+                    if (reader.Read())
+                    {
+                        isSuccess = reader["isSuccess"] != DBNull.Value ? Convert.ToInt32(reader["isSuccess"]) : 0;
+                        msg       = reader["msg"]       != DBNull.Value ? reader["msg"].ToString() : "Có lỗi xảy ra";
+                    }
+                    else { msg = "Stored procedure không trả về kết quả"; }
+                    reader.Close();
+                    if (isSuccess == 1) tx.Commit(); else tx.Rollback();
 
-                Response.Write("{\"isSuccess\":" + isSuccess + ",\"msg\":\"" + msg.Replace("\"", "\\\"") + "\"}");
+                    Response.Write("{\"isSuccess\":" + isSuccess + ",\"msg\":\"" + msg.Replace("\"", "\\\"") + "\"}");
+                }
             }
         }
         catch (Exception ex)

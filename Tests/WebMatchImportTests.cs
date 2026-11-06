@@ -85,6 +85,7 @@ public static class WebMatchImportTests
         Check(WebMatchImport.FirstHalfLine(0) == 0 && WebMatchImport.FirstHalfLine(.25m) == 0, "Clamp small lines to zero");
         string priorityJson = @"[{'key':'a','title':'A','markets':[{'key':'alternate_spreads','outcomes':[{'name':'Home FC','point':-1.5,'price':1.9},{'name':'Away FC','point':1.5,'price':1.9}]},{'key':'spreads','outcomes':[{'name':'Home FC','point':-0.5,'price':1.8},{'name':'Away FC','point':0.5,'price':2.0}]}]}]".Replace('\'', '"');
         Check(WebMatchImport.SelectMarkets(WebMatchImport.Rows(new JavaScriptSerializer().DeserializeObject(priorityJson)), "Home FC", "Away FC").Single().Line == -.5m, "Prefer main handicap over closer-priced alternate");
-        Console.WriteLine("107 assertions passed.");
+        Check(WebMatchImport.LikeLiteral("A_%[~B") == "A~_~%~[~~B", "Escape literal SQL LIKE wildcard characters");
+        Console.WriteLine("108 assertions passed.");
     }
 }

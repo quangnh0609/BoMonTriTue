@@ -1,8 +1,9 @@
-﻿DROP TABLE IF EXISTS [dbo].[bet_season]
+DROP TABLE IF EXISTS [dbo].[bet_season]
 GO
 CREATE TABLE [dbo].[bet_season](
 	[season] [char](16) NOT NULL,
 	[season_name] [nvarchar](128) NOT NULL,
+	[is_active] [bit] NOT NULL CONSTRAINT [DF_bet_season_is_active] DEFAULT (1),
  CONSTRAINT [PK_bet_season] PRIMARY KEY CLUSTERED 
 (
 	[season] ASC

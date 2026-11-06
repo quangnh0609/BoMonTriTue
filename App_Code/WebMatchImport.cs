@@ -10,6 +10,10 @@ using System.Web.Script.Serialization;
 // The Odds API v4 decimal odds. Never combine outcomes from different bookmakers.
 public static class WebMatchImport
 {
+    public static string LikeLiteral(string name)
+    {
+        return name.Replace("~", "~~").Replace("%", "~%").Replace("_", "~_").Replace("[", "~[");
+    }
     public class Quota
     {
         public long Remaining, Total;

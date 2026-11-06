@@ -23,14 +23,14 @@ const elements = new Map();
 const el = id => { if (!elements.has(id)) elements.set(id, new Element(id)); return elements.get(id); };
 const requests = [];
 let reloads = 0;
+const kind = process.env.WEB_MATCH_TEST_KIND || 'đội';
 const context = {
     document: { getElementById: el, createElement: () => new Element(), body: { style: {} }, addEventListener() {} },
     window: { webMatchToken: 'token', location: { reload() { reloads++; } } },
     fetch: async (_, request) => {
         const data = JSON.parse(request.body); requests.push(data);
         return { json: async () => data.teamChoices.sourceTeam ? { ok: true, count: 1 } : {
-            ok: true, needsTeams: true, requiredTeams: [{ key: 'sourceTeam', name: 'External Team' }],
-            teams: [{ id: 'EXISTING', name: 'Existing Team' }]
+            ok: true, needsTeams: true, requiredTeams: [{ key: 'sourceTeam', name: 'External Team', kind, candidates: [{ id: 'EXISTING', name: 'Existing Team' }], allOptions: [{ id: 'EXISTING', name: 'Existing Team' }, { id: 'DANANG', name: 'Đà Nẵng' }] }]
         } };
     }
 };
@@ -41,9 +41,22 @@ vm.runInContext(fs.readFileSync(path.join(__dirname, '../Scripts/web-match-impor
     await el('webMatchCreate').onclick();
     assert.equal(reloads, 0, 'Do not close or reload while teams need resolution');
     assert.equal(el('webMatchTeams').classList.contains('hidden'), false);
+    assert(el('webMatchTeamList').children[0].children[0].textContent.startsWith(kind === 'giải' ? 'Giải đấu:' : 'Đội:'));
     await el('webMatchTeamsCreate').onclick();
     assert.equal(requests.length, 1, 'No implicit new-team choice');
     let select = el('webMatchTeamList').children[0].children[2];
+    const search = el('webMatchTeamList').children[0].children[1];
+    assert.equal(select.options.length, 3, 'Start with LIKE candidates only');
+    el('webMatchTeamList').children[0].children[4].onclick();
+    search.value = 'da nang'; search.oninput();
+    assert.equal(select.options.length, 3);
+    assert.equal(select.options[2].value, 'DANANG', 'Search ignores Vietnamese accents');
+    search.value = 'EXISTING'; search.oninput();
+    assert.equal(select.options[2].value, 'EXISTING', 'Search matches team codes');
+    search.value = 'not-found'; search.oninput();
+    assert.equal(select.options.length, 2, 'Remove unmatched options instead of hiding native options');
+    search.value = ''; search.oninput();
+    assert.equal(select.options.length, 4, 'Clearing search restores options');
     assert.equal(select.options[1].value, '__new__');
     select.value = '__new__'; select.onchange();
     await el('webMatchTeamsCreate').onclick();

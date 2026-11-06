@@ -1,4 +1,4 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true" CodePage="65001" %>
+<%@ Page Language="C#" AutoEventWireup="true" CodePage="65001" %>
 <%@ Register Src="~/ucAddMatch.ascx" TagPrefix="uc" TagName="AddMatch" %>
 <%@ Register Src="~/ucResultMatch.ascx" TagPrefix="uc" TagName="ResultMatch" %>
 <%@ Register Src="~/ucTicketMatch.ascx" TagPrefix="uc" TagName="TicketMatch" %>
@@ -508,13 +508,13 @@
 			string connStr = ConfigurationManager.ConnectionStrings["MyDbConn"].ConnectionString;
 			using (SqlConnection conn = new SqlConnection(connStr)) {
 				// 1. Lấy dữ liệu Season
-				string sqlSeason = "SELECT rtrim(ltrim(season)) as season, season_name FROM bet_season";
+				string sqlSeason = "SELECT rtrim(ltrim(season)) as season, season_name, is_active FROM bet_season";
 				SqlDataAdapter daSeason = new SqlDataAdapter(sqlSeason, conn);
 				DataTable dtSeason = new DataTable();
 				daSeason.Fill(dtSeason);
 
 				// 2. Lấy dữ liệu Team
-				string sqlTeam = "SELECT rtrim(ltrim(team)) as team, team_name FROM bet_team";
+				string sqlTeam = "SELECT rtrim(ltrim(team)) as team, team_name, is_active FROM bet_team";
 				SqlDataAdapter daTeam = new SqlDataAdapter(sqlTeam, conn);
 				DataTable dtTeam = new DataTable();
 				daTeam.Fill(dtTeam);
@@ -525,14 +525,14 @@
 				var listS = new List<Dictionary<string, object>>();
 				foreach (DataRow r in dtSeason.Rows) {
 					listS.Add(new Dictionary<string, object> { 
-						{ "season", r["season"] }, { "season_name", r["season_name"] } 
+						{ "season", r["season"] }, { "season_name", r["season_name"] }, { "is_active", r["is_active"] } 
 					});
 				}
 
 				var listT = new List<Dictionary<string, object>>();
 				foreach (DataRow r in dtTeam.Rows) {
 					listT.Add(new Dictionary<string, object> { 
-						{ "team", r["team"] }, { "team_name", r["team_name"] } 
+						{ "team", r["team"] }, { "team_name", r["team_name"] }, { "is_active", r["is_active"] } 
 					});
 				}
 
@@ -541,7 +541,8 @@
 				string jsonT = serializer.Serialize(listT);
 				string script = "var dataSeason = " + jsonS + "; var dataTeam = " + jsonT + ";";
 				
-				ClientScript.RegisterStartupScript(this.GetType(), "InitData", script, true);
+				script += "var dataSeasonAll = dataSeason; var dataTeamAll = dataTeam; dataSeason = dataSeasonAll.filter(function(x){return x.is_active;}); dataTeam = dataTeamAll.filter(function(x){return x.is_active;});";
+                ClientScript.RegisterStartupScript(this.GetType(), "InitData", script, true);
 			}
 		} catch (Exception ex) {
 			// Ghi log lỗi ở đây để check nếu SQL có vấn đề
@@ -1058,12 +1059,12 @@
         
         window.addEventListener('load', function() {
             if (typeof dataTeam !== 'undefined') {
-                teamData = dataTeam;
+                teamData = dataTeamAll;
                 renderTeamDropdown(teamData);
             }
             
             if (typeof dataSeason !== 'undefined') {
-                seasonData = dataSeason;
+                seasonData = dataSeasonAll;
                 renderSeasonDropdown(seasonData);
             }
         });

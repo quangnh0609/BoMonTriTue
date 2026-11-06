@@ -1,4 +1,4 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true" CodePage="65001" %>
+<%@ Page Language="C#" AutoEventWireup="true" CodePage="65001" %>
 <%@ Register Src="~/ucAddEsport.ascx" TagPrefix="uc" TagName="AddEsport" %>
 <%@ Register Src="~/ucTicketMatch.ascx" TagPrefix="uc" TagName="TicketMatch" %>
 <%@ Register Src="~/ucSidebar.ascx" TagPrefix="uc" TagName="Sidebar" %>
@@ -135,22 +135,23 @@
         try {
             string connStr = ConfigurationManager.ConnectionStrings["MyDbConn"].ConnectionString;
             using (SqlConnection conn = new SqlConnection(connStr)) {
-                string sqlSeason = "SELECT rtrim(ltrim(season)) as season, season_name FROM bet_season";
+                string sqlSeason = "SELECT rtrim(ltrim(season)) as season, season_name, is_active FROM bet_season";
                 SqlDataAdapter daSeason = new SqlDataAdapter(sqlSeason, conn);
                 DataTable dtSeason = new DataTable();
                 daSeason.Fill(dtSeason);
-                string sqlTeam = "SELECT rtrim(ltrim(team)) as team, team_name FROM bet_team";
+                string sqlTeam = "SELECT rtrim(ltrim(team)) as team, team_name, is_active FROM bet_team";
                 SqlDataAdapter daTeam = new SqlDataAdapter(sqlTeam, conn);
                 DataTable dtTeam = new DataTable();
                 daTeam.Fill(dtTeam);
                 var serializer = new System.Web.Script.Serialization.JavaScriptSerializer();
                 var listS = new List<Dictionary<string, object>>();
                 foreach (DataRow r in dtSeason.Rows)
-                    listS.Add(new Dictionary<string, object> { { "season", r["season"] }, { "season_name", r["season_name"] } });
+                    listS.Add(new Dictionary<string, object> { { "season", r["season"] }, { "season_name", r["season_name"] }, { "is_active", r["is_active"] } });
                 var listT = new List<Dictionary<string, object>>();
                 foreach (DataRow r in dtTeam.Rows)
-                    listT.Add(new Dictionary<string, object> { { "team", r["team"] }, { "team_name", r["team_name"] } });
+                    listT.Add(new Dictionary<string, object> { { "team", r["team"] }, { "team_name", r["team_name"] }, { "is_active", r["is_active"] } });
                 string script = "var dataSeason = " + serializer.Serialize(listS) + "; var dataTeam = " + serializer.Serialize(listT) + ";";
+                script += "var dataSeasonAll = dataSeason; var dataTeamAll = dataTeam; dataSeason = dataSeasonAll.filter(function(x){return x.is_active;}); dataTeam = dataTeamAll.filter(function(x){return x.is_active;});";
                 ClientScript.RegisterStartupScript(this.GetType(), "InitData", script, true);
             }
         } catch (Exception ex) { }
@@ -1188,8 +1189,8 @@
         }
         let teamData = [], seasonData = [];
         window.addEventListener('load', function() {
-            if (typeof dataTeam !== 'undefined') { teamData = dataTeam; renderTeamDropdown(teamData); }
-            if (typeof dataSeason !== 'undefined') { seasonData = dataSeason; renderSeasonDropdown(seasonData); }
+            if (typeof dataTeam !== 'undefined') { teamData = dataTeamAll; renderTeamDropdown(teamData); }
+            if (typeof dataSeason !== 'undefined') { seasonData = dataSeasonAll; renderSeasonDropdown(seasonData); }
             // Always render list from API so detail odds are shown on first load too
             reloadMatchesData();
         });

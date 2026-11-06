@@ -1,4 +1,4 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true" CodePage="65001" %>
+<%@ Page Language="C#" AutoEventWireup="true" CodePage="65001" %>
 <%@ Import Namespace="System.Data" %>
 <%@ Import Namespace="System.Data.SqlClient" %>
 <%@ Import Namespace="System.Collections.Generic" %>
@@ -88,6 +88,7 @@
                 SqlTransaction tran = conn.BeginTransaction();
                 try
                 {
+                    CatalogState.RequireActive(conn, tran, season, new[] { home, way });
                     // 1. Lưu thông tin trận đấu chính
                     string sqlMatch = editYn == "true"
                         ? @"exec bet_esport_match_save @match_id, 1, @season, @home, @way, @match_time, @userID"
