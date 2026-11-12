@@ -1,5 +1,21 @@
 # Lấy từ web — The Odds API v4
 
+## Chọn nguồn API
+
+Bấm Lấy từ web để chọn The Odds API hoặc API-Football trước khi lọc ngày/giải. The Odds API giữ cơ chế cũ. Mỗi nguồn có key, cache và hạn mức riêng; đổi nguồn xóa danh sách/lựa chọn, backend kiểm tra nguồn khớp snapshot.
+
+API-Football: thêm `<add key="ApiFootballKey" value="YOUR_API_FOOTBALL_KEY" />` vào appSettings trong web.config trên máy chủ. Dùng key trực tiếp từ https://dashboard.api-football.com/ (header x-apisports-key, base URL https://v3.football.api-sports.io/), không dùng key RapidAPI. Không cần migration DB mới cho thay đổi này; vẫn cần áp dụng các migration có sẵn của hệ thống.
+
+API-Football lấy danh mục từ /leagues (cache 6 giờ), chỉ giữ các giải tương ứng với 14 giải The Odds API, cùng tên hiển thị và thứ tự. Đối chiếu chính xác tên giải và quốc gia để lấy ID thật, không hiển thị giải khác hoặc chọn nhầm giải trùng tên. Giải thiếu hoặc có kết quả đối chiếu không rõ ràng sẽ không được đưa vào danh sách, rồi /fixtures?date=...&timezone=Asia/Bangkok cho từng ngày được chọn. Chỉ giữ đúng giải, ngày UTC+7 và trạng thái NS chưa bắt đầu. Lấy danh sách cũng tính lượt gọi API-Football. Khi chọn trận và bấm Lấy kèo và tạo, gọi /odds?fixture=...&page=... chỉ cho các trận được chọn, đọc hết phân trang. Cache lịch/kèo 120 giây; giữ kèo trong snapshot 15 phút để bước đối chiếu không gọi lại. Giãn request theo X-RateLimit-Limit (mặc định 10/phút); nhiều trận sẽ cần chờ lâu hơn. Kiểm tra errors kể cả HTTP 200; quyền mùa giải và dữ liệu kèo phụ thuộc gói tài khoản.
+
+Adapter dùng allowlist tên market cho 1X2, Asian Handicap, Goals Over/Under và một số kèo góc/thẻ/từng hiệp khi nguồn có. Không dùng European handicap, team totals, booking points hoặc định dạng mốc không nhận diện. Hai cửa phải cùng nhà cái, cùng mốc tổng/hai dấu chấp đối nhau. Tái sử dụng giá 0.9, làm tròn 1X2, cách chọn mốc và quy tắc suy H1. Không có kèo phù hợp thì báo tên trận trước transaction, chưa tạo trận nào. ID mới có tiền tố nguồn trước khi băm; cơ chế đối chiếu và kiểm tra trùng giải/đội/giờ giữ như cũ.
+
+Tài liệu: https://www.api-football.com/documentation-v3 ; https://www.api-football.com/news/post/how-to-get-started-with-api-football-the-complete-beginners-guide ; https://www.api-football.com/news/post/how-ratelimit-works .
+
+Kiểm tra: Tests/ApiFootballImportTests.cs; Tests/web-match-selection.test.cjs với WEB_MATCH_TEST_SOURCE=the-odds-api và api-football; Tests/web-match-team-dialog.test.cjs cho đội và giải. Chưa kiểm thử trực tiếp API-Football khi chưa cấu hình key hoặc tạo trận trên IIS/SQL.
+
+## Luồng The Odds API
+
 Đặt API key trong `TheOddsApiKey` ở web.config. Nguồn: https://the-odds-api.com/liveapi/guides/v4/ ; mã market: https://the-odds-api.com/sports-odds-data/betting-markets.html .
 
 Popup chọn một hoặc nhiều ngày trong 7 ngày từ hôm nay theo UTC+7 và một trong 14 giải được phép, gồm UEFA Nations League, Euro, FIFA World Cup và Cúp bóng đá châu Phi (AFCON). Mã giải theo danh mục https://the-odds-api.com/sports-odds-data/sports-apis.html ; dữ liệu trận phụ thuộc lịch thi đấu và nguồn API. Backend kiểm tra lại cả ngày lẫn giải. Lọc chỉ gọi `/events` trong khoảng ngày nhỏ nhất–lớn nhất rồi giữ đúng các ngày đã chọn theo UTC+7; chưa lấy kèo và không tốn credits danh sách. Danh sách hiển thị cả giờ và ngày. Khi bấm Lấy kèo và tạo, chỉ gọi `/events/{id}/odds` cho các trận được chọn, vùng eu, odds decimal, trước khi mở transaction SQL. Cache API 120 giây; kèo đã lấy được giữ trong snapshot 15 phút để bước đối chiếu đội/giải không gọi lại. Nếu một trận chưa có kèo phù hợp thì báo tên trận và chưa tạo trận nào; người dùng bỏ chọn để tiếp tục.

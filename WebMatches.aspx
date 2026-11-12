@@ -7,14 +7,19 @@
 <%@ Import Namespace="System.Globalization" %>
 <script runat="server">
     private bool webImportAdmin;
+    private string source = "the-odds-api";
+    bool AllowedLeague(string league) { return source == "api-football" ? ApiFootballImport.GetLeagues().Any(l => l.id == league) : WebMatchImport.IsAllowedLeague(league); }
+    string MatchId(WebMatchImport.Fixture fixture) { return WebMatchImport.CompactId("OM", fixture.Source == "api-football" ? "api-football:" + fixture.Id : fixture.Id); }
     string Connection { get { return ConfigurationManager.ConnectionStrings["MyDbConn"].ConnectionString; } }
     void Reply(object value)
     {
         var serializer = new System.Web.Script.Serialization.JavaScriptSerializer { MaxJsonLength = 10000000 };
         var data = serializer.Deserialize<Dictionary<string, object>>(serializer.Serialize(value));
-        data["quota"] = webImportAdmin ? WebMatchImport.CurrentQuota : null;
+        data["quota"] = webImportAdmin ? (source == "api-football" ? ApiFootballImport.CurrentQuota : WebMatchImport.CurrentQuota) : null;
+        data["source"] = source;
+        data["quotaUnit"] = source == "api-football" ? "Lượt gọi hôm nay" : "Credits còn lại";
         var today = DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(7));
-        data["quotaResetDate"] = new DateTime(today.Year, today.Month, 1).AddMonths(1).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+        data["quotaResetDate"] = source == "api-football" ? "Theo hạn mức ngày của tài khoản" : new DateTime(today.Year, today.Month, 1).AddMonths(1).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
         Response.Write(serializer.Serialize(data));
     }
     protected void Page_Load(object sender, EventArgs e)
@@ -49,11 +54,15 @@
             var input = new System.Web.Script.Serialization.JavaScriptSerializer().Deserialize<Dictionary<string, object>>(new System.IO.StreamReader(Request.InputStream).ReadToEnd());
             if (WebMatchImport.Str(input, "token") != Convert.ToString(Session["WebMatchToken"]) || Session["WebMatchToken"] == null)
                 throw new InvalidOperationException("Phiên làm việc đã thay đổi. Vui lòng tải lại trang.");
+            string requestedSource = WebMatchImport.Str(input, "source");
+            if (requestedSource != "" && requestedSource != "the-odds-api" && requestedSource != "api-football") throw new InvalidOperationException("Nguồn dữ liệu không hợp lệ.");
+            if (requestedSource != "") source = requestedSource;
+            if (source == "api-football") Server.ScriptTimeout = 1800;
             string action = WebMatchImport.Str(input, "action");
             if (action == "leagues")
             {
-                var leagues = WebMatchImport.GetLeagues();
-                try { WebMatchImport.CachedGet("sports/", 120); } catch (InvalidOperationException) { }
+                var leagues = source == "api-football" ? ApiFootballImport.GetLeagues() : WebMatchImport.GetLeagues();
+                if (source == "the-odds-api") { try { WebMatchImport.CachedGet("sports/", 120); } catch (InvalidOperationException) { } }
                 Reply(new { ok = true, leagues = leagues }); return;
             }
             if (action == "search") { Search(input); return; }
@@ -69,25 +78,30 @@
         var dates = WebMatchImport.SelectedDates(input, today);
         DateTime from = dates.Min(), to = dates.Max().AddDays(1).AddSeconds(-1);
         string league = WebMatchImport.Str(input, "league");
-        if (!WebMatchImport.IsAllowedLeague(league)) throw new InvalidOperationException("Vui lòng chọn một giải đấu trong danh sách được hỗ trợ.");
+        if (!AllowedLeague(league)) throw new InvalidOperationException("Vui lòng chọn một giải đấu trong danh sách được hỗ trợ.");
         Session.Remove("WebMatchResults");
         var result = new Dictionary<string, WebMatchImport.Fixture>();
-        var start = new DateTimeOffset(from, TimeSpan.FromHours(7));
-        var end = new DateTimeOffset(to, TimeSpan.FromHours(7));
-        string range = "&commenceTimeFrom=" + Uri.EscapeDataString(start.UtcDateTime.ToString("yyyy-MM-ddTHH:mm:ssZ")) + "&commenceTimeTo=" + Uri.EscapeDataString(end.UtcDateTime.ToString("yyyy-MM-ddTHH:mm:ssZ"));
-        string root = "sports/" + league;
-        var events = WebMatchImport.Rows(WebMatchImport.CachedGet(root + "/events?dateFormat=iso" + range, 120)).ToList();
-        events = events.Where(r => {
-            DateTimeOffset time = DateTimeOffset.Parse(WebMatchImport.Str(r, "commence_time"), CultureInfo.InvariantCulture);
-            return dates.Contains(time.ToOffset(TimeSpan.FromHours(7)).Date) && time > DateTimeOffset.UtcNow;
-        }).ToList();
-        foreach (var item in events)
+        if (source == "api-football") result = ApiFootballImport.Search(dates, league);
+        else
         {
-            string id = WebMatchImport.Str(item, "id");
-            var raw = item;
-            string home = WebMatchImport.Str(raw, "home_team"), away = WebMatchImport.Str(raw, "away_team");
-            result[id] = new WebMatchImport.Fixture { Id = id, League = WebMatchImport.Str(raw, "sport_title"), LeagueId = league, Season = "", Home = home, Away = away, HomeId = home, AwayId = away, Kickoff = DateTimeOffset.Parse(WebMatchImport.Str(raw, "commence_time"), CultureInfo.InvariantCulture) };
+            var start = new DateTimeOffset(from, TimeSpan.FromHours(7));
+            var end = new DateTimeOffset(to, TimeSpan.FromHours(7));
+            string range = "&commenceTimeFrom=" + Uri.EscapeDataString(start.UtcDateTime.ToString("yyyy-MM-ddTHH:mm:ssZ")) + "&commenceTimeTo=" + Uri.EscapeDataString(end.UtcDateTime.ToString("yyyy-MM-ddTHH:mm:ssZ"));
+            string root = "sports/" + league;
+            var events = WebMatchImport.Rows(WebMatchImport.CachedGet(root + "/events?dateFormat=iso" + range, 120)).ToList();
+            events = events.Where(r => {
+                DateTimeOffset time = DateTimeOffset.Parse(WebMatchImport.Str(r, "commence_time"), CultureInfo.InvariantCulture);
+                return dates.Contains(time.ToOffset(TimeSpan.FromHours(7)).Date) && time > DateTimeOffset.UtcNow;
+            }).ToList();
+            foreach (var item in events)
+            {
+                string id = WebMatchImport.Str(item, "id");
+                var raw = item;
+                string home = WebMatchImport.Str(raw, "home_team"), away = WebMatchImport.Str(raw, "away_team");
+                result[id] = new WebMatchImport.Fixture { Id = id, League = WebMatchImport.Str(raw, "sport_title"), LeagueId = league, Season = "", Home = home, Away = away, HomeId = home, AwayId = away, Kickoff = DateTimeOffset.Parse(WebMatchImport.Str(raw, "commence_time"), CultureInfo.InvariantCulture) };
+            }
         }
+        Session["WebMatchSource"] = source;
         Session["WebMatchResults"] = result;
         Session["WebMatchExpires"] = DateTime.UtcNow.AddMinutes(15);
         string snapshot = Guid.NewGuid().ToString("N"); Session["WebMatchSnapshot"] = snapshot;
@@ -179,24 +193,30 @@
         var results = Session["WebMatchResults"] as Dictionary<string, WebMatchImport.Fixture>;
         if (results == null || Session["WebMatchExpires"] == null || DateTime.UtcNow > (DateTime)Session["WebMatchExpires"] || WebMatchImport.Str(input, "snapshot") != Convert.ToString(Session["WebMatchSnapshot"]))
             throw new InvalidOperationException("Danh sách đã hết hạn hoặc thay đổi. Vui lòng lọc lại.");
+        if (Convert.ToString(Session["WebMatchSource"]) != source || results.Values.Any(f => f.Source != source))
+            throw new InvalidOperationException("Nguồn dữ liệu đã thay đổi. Vui lòng lọc lại.");
         var ids = WebMatchImport.SelectedIds(input);
         if (ids.Count == 0 || ids.Count > 100 || ids.Any(id => !results.ContainsKey(id))) throw new InvalidOperationException("Chọn từ 1 đến 100 trận trong danh sách.");
         // Fetch odds only for the explicit selection, before opening a database transaction.
         foreach (string id in ids)
         {
             var f = results[id];
-            if (!WebMatchImport.IsAllowedLeague(f.LeagueId) || f.Kickoff <= DateTimeOffset.UtcNow)
+            if (!AllowedLeague(f.LeagueId) || f.Kickoff <= DateTimeOffset.UtcNow)
                 throw new InvalidOperationException("Có trận đã bắt đầu hoặc giải không được hỗ trợ. Vui lòng lọc lại.");
         }
         foreach (string id in ids)
         {
             var f = results[id];
             if (f.Markets.Count > 0) continue;
-            var raw = WebMatchImport.Obj(WebMatchImport.CachedGet("sports/" + f.LeagueId + "/events/" + Uri.EscapeDataString(id) + "/odds?regions=eu&markets=h2h,spreads,totals,h2h_h1,spreads_h1,totals_h1,alternate_spreads_corners,alternate_totals_corners,alternate_spreads_cards,alternate_totals_cards&oddsFormat=decimal&dateFormat=iso", 120));
-            if (WebMatchImport.Str(raw, "home_team") != f.Home || WebMatchImport.Str(raw, "away_team") != f.Away)
-                throw new InvalidOperationException("Thông tin trận đã thay đổi. Vui lòng lọc lại.");
-            f.Kickoff = DateTimeOffset.Parse(WebMatchImport.Str(raw, "commence_time"), CultureInfo.InvariantCulture);
-            f.Markets = WebMatchImport.SelectMarkets(WebMatchImport.Rows(raw["bookmakers"]), f.Home, f.Away);
+            if (source == "api-football") f.Markets = ApiFootballImport.LoadMarkets(f);
+            else
+            {
+                var raw = WebMatchImport.Obj(WebMatchImport.CachedGet("sports/" + f.LeagueId + "/events/" + Uri.EscapeDataString(id) + "/odds?regions=eu&markets=h2h,spreads,totals,h2h_h1,spreads_h1,totals_h1,alternate_spreads_corners,alternate_totals_corners,alternate_spreads_cards,alternate_totals_cards&oddsFormat=decimal&dateFormat=iso", 120));
+                if (WebMatchImport.Str(raw, "home_team") != f.Home || WebMatchImport.Str(raw, "away_team") != f.Away)
+                    throw new InvalidOperationException("Thông tin trận đã thay đổi. Vui lòng lọc lại.");
+                f.Kickoff = DateTimeOffset.Parse(WebMatchImport.Str(raw, "commence_time"), CultureInfo.InvariantCulture);
+                f.Markets = WebMatchImport.SelectMarkets(WebMatchImport.Rows(raw["bookmakers"]), f.Home, f.Away);
+            }
             WebMatchImport.ApplyFirstHalfRules(f.Markets);
             if (f.Markets.Count == 0)
                 throw new InvalidOperationException("Trận " + f.Home + " – " + f.Away + " chưa có kèo phù hợp. Bỏ chọn trận này và thử lại.");
@@ -210,7 +230,6 @@
                 foreach (string id in ids)
                 {
                     var f = results[id];
-                    if (!WebMatchImport.IsAllowedLeague(f.LeagueId)) throw new InvalidOperationException("Danh sách có giải không được hỗ trợ. Vui lòng lọc lại.");
                     if (f.Kickoff <= DateTimeOffset.UtcNow) throw new InvalidOperationException("Có trận đã bắt đầu. Vui lòng lọc lại.");
                     string season = resolvedTeams["league:" + f.League];
                     string homeKey = "team:" + f.Home, awayKey = "team:" + f.Away;
@@ -219,7 +238,7 @@
                     if (home == away) throw new InvalidOperationException("Hai đội của trận " + f.Home + " – " + f.Away + " không được trùng nhau.");
                     using (var cmd = new SqlCommand("SELECT COUNT(*) FROM bet_match WITH (UPDLOCK,HOLDLOCK) WHERE match=@id OR (season=@season AND home=@home AND way=@away AND time=@time)", conn, tx))
                     {
-                        cmd.Parameters.AddWithValue("@id", WebMatchImport.CompactId("OM", id)); cmd.Parameters.AddWithValue("@season", season); cmd.Parameters.AddWithValue("@home", home); cmd.Parameters.AddWithValue("@away", away); cmd.Parameters.AddWithValue("@time", f.Kickoff.ToOffset(TimeSpan.FromHours(7)).DateTime);
+                        cmd.Parameters.AddWithValue("@id", MatchId(f)); cmd.Parameters.AddWithValue("@season", season); cmd.Parameters.AddWithValue("@home", home); cmd.Parameters.AddWithValue("@away", away); cmd.Parameters.AddWithValue("@time", f.Kickoff.ToOffset(TimeSpan.FromHours(7)).DateTime);
                         if (Convert.ToInt32(cmd.ExecuteScalar()) > 0) throw new InvalidOperationException("Trận " + f.Home + " – " + f.Away + " đã tồn tại. Bỏ chọn trận này và thử lại.");
                     }
                     foreach (var m in f.Markets)
@@ -227,7 +246,7 @@
                         VALUES (@id,@season,@time,@home,@away,@code,@total,@over,@under,@handicap,@homeWin,@awayWin,@draw)", conn, tx))
                     {
                         bool total = m.Code[0] == '0' || m.Code[0] == '2' || m.Code[0] == '5', euro = m.Code[0] == '4';
-                        cmd.Parameters.AddWithValue("@id", WebMatchImport.CompactId("OM", id)); cmd.Parameters.AddWithValue("@season", season); cmd.Parameters.AddWithValue("@time", f.Kickoff.ToOffset(TimeSpan.FromHours(7)).DateTime); cmd.Parameters.AddWithValue("@home", home); cmd.Parameters.AddWithValue("@away", away); cmd.Parameters.AddWithValue("@code", m.Code);
+                        cmd.Parameters.AddWithValue("@id", MatchId(f)); cmd.Parameters.AddWithValue("@season", season); cmd.Parameters.AddWithValue("@time", f.Kickoff.ToOffset(TimeSpan.FromHours(7)).DateTime); cmd.Parameters.AddWithValue("@home", home); cmd.Parameters.AddWithValue("@away", away); cmd.Parameters.AddWithValue("@code", m.Code);
                         cmd.Parameters.AddWithValue("@total", total ? (object)m.Line.Value : DBNull.Value);
                         cmd.Parameters.AddWithValue("@over", total ? (object).9m : DBNull.Value); cmd.Parameters.AddWithValue("@under", total ? (object).9m : DBNull.Value);
                         cmd.Parameters.AddWithValue("@handicap", !total && !euro ? (object)m.Line.Value : DBNull.Value);
@@ -238,12 +257,12 @@
                     using (var cmd = new SqlCommand(@"INSERT INTO dbo.bet_match (match,season,time,home,way,code,handicap,home_win,way_win)
                         VALUES (@id,@season,@time,@home,@away,'71',0,1,1)", conn, tx))
                     {
-                        cmd.Parameters.AddWithValue("@id", WebMatchImport.CompactId("OM", id)); cmd.Parameters.AddWithValue("@season", season);
+                        cmd.Parameters.AddWithValue("@id", MatchId(f)); cmd.Parameters.AddWithValue("@season", season);
                         cmd.Parameters.AddWithValue("@time", f.Kickoff.ToOffset(TimeSpan.FromHours(7)).DateTime);
                         cmd.Parameters.AddWithValue("@home", home); cmd.Parameters.AddWithValue("@away", away); cmd.ExecuteNonQuery();
                     }
                     using (var cmd = new SqlCommand("UPDATE bet_match_total SET user_host=@user WHERE match=@id", conn, tx))
-                    { cmd.Parameters.AddWithValue("@user", Session["UserID"]); cmd.Parameters.AddWithValue("@id", WebMatchImport.CompactId("OM", id)); cmd.ExecuteNonQuery(); }
+                    { cmd.Parameters.AddWithValue("@user", Session["UserID"]); cmd.Parameters.AddWithValue("@id", MatchId(f)); cmd.ExecuteNonQuery(); }
                 }
                 tx.Commit();
             }

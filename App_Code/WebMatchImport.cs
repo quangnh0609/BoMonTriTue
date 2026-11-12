@@ -118,6 +118,7 @@ public static class WebMatchImport
     }
     public class Fixture
     {
+        public string Source = "the-odds-api";
         public string Id, League, LeagueId, Season, Home, Away, HomeId, AwayId;
         public DateTimeOffset Kickoff;
         public string Time { get { return Kickoff.ToOffset(TimeSpan.FromHours(7)).ToString("HH:mm dd/MM/yyyy"); } }

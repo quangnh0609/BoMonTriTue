@@ -2,6 +2,8 @@
 <configuration>
 
   <appSettings>
+    <!-- Direct API-Football key from dashboard.api-football.com (not RapidAPI). -->
+    <add key="ApiFootballKey" value="" />
     <add key="ShowFeeColumn" value="false" />
 	<add key="SqlCommandTimeoutSeconds" value="0" />
   </appSettings>

@@ -21,6 +21,8 @@ class Element {
 }
 const elements = new Map();
 const el = id => { if (!elements.has(id)) elements.set(id, new Element(id)); return elements.get(id); };
+const dialogHtml = fs.readFileSync(path.join(__dirname, '../WebMatchDialogs.html'), 'utf8');
+for (const id of ['webMatchSource','webMatchSourceOdds','webMatchSourceFootball','webMatchSourceClose','webMatchChangeSource','webMatchSourceNote']) assert(dialogHtml.includes('id="' + id + '"'), 'Source UI must exist: ' + id);
 const requests = [];
 let reloads = 0;
 const kind = process.env.WEB_MATCH_TEST_KIND || 'đội';
@@ -46,6 +48,8 @@ context.fetch = async (_, request) => {
 };
 (async () => {
     await context.window.webMatchOpen();
+    assert.equal(requests.length, 0, "Opening source selector must not call either API");
+    await el(process.env.WEB_MATCH_TEST_SOURCE === "api-football" ? "webMatchSourceFootball" : "webMatchSourceOdds").onclick();
     el('webMatchLeague').value='soccer_epl';
     const first=el('webMatchDays').children[0].dataset.day;
     const third=el('webMatchDays').children[2].dataset.day;
@@ -58,10 +62,15 @@ context.fetch = async (_, request) => {
     assert.equal(requests[2].action,'create');
     assert.deepEqual(requests[2].ids,['fixture-one']);
     assert.equal(requests[2].snapshot,'selection');
+    assert(requests.every(r => r.source === (process.env.WEB_MATCH_TEST_SOURCE || 'the-odds-api')), 'Keep chosen source on every request');
     el('webMatchBack').onclick();
     el('webMatchDays').children[0].onclick();
     el('webMatchDays').children[2].onclick();
     await el('webMatchSearch').onclick();
     assert.equal(requests.length,3,'Empty day selection must not send a request');
+    el('webMatchChangeSource').onclick();
+    await el('webMatchSourceFootball').onclick();
+    assert.equal(requests[3].source, 'api-football');
+    assert.equal(el('webMatchList').children.length,0,'Switching source clears old selection');
     console.log('Multiple day selection and list-first flow checks passed.');
 })().catch(error => {console.error(error);process.exitCode=1;});

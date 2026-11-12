@@ -1,8 +1,8 @@
 (function () {
     'use strict';
     const el = id => document.getElementById(id);
-    let busy = false, loaded = false, opener, snapshot = '', selectedDays = new Set();
-    const dialogs = ['webMatchFilter', 'webMatchResults', 'webMatchTeams'];
+    let busy = false, loaded = false, opener, snapshot = '', selectedDays = new Set(), source = 'the-odds-api';
+    const dialogs = ['webMatchSource', 'webMatchFilter', 'webMatchResults', 'webMatchTeams'];
     let pendingIds = [], teamChoices = {}, newTeamCodes = {}, requiredTeams = [];
     function renderDays(defaultSelection = true) {
         const today = new Date(Date.now() + 7 * 3600000).toISOString().slice(0, 10);
@@ -26,11 +26,12 @@
         else if (opener) opener.focus();
     }
     async function api(data) {
-        const response = await fetch('WebMatches.aspx', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ token: window.webMatchToken }, data)) });
+        const response = await fetch('WebMatches.aspx', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ token: window.webMatchToken, source }, data)) });
         let result;
         try { result = await response.json(); } catch (_) { throw new Error('Không nhận được dữ liệu. Vui lòng kiểm tra kết nối hoặc đăng nhập lại.'); }
         const quota = result.quota;
-        const quotaText = (quota ? 'Credits còn lại: ' + Number(quota.Remaining).toLocaleString('vi-VN') + ' / ' + Number(quota.Total).toLocaleString('vi-VN') : 'Credits còn lại: — / —') + ' · Reset: ' + (result.quotaResetDate || '—');
+        const quotaLabel = result.quotaUnit || (source === 'api-football' ? 'Lượt gọi hôm nay' : 'Credits còn lại');
+        const quotaText = (quota ? quotaLabel + ': ' + Number(quota.Remaining).toLocaleString('vi-VN') + ' / ' + Number(quota.Total).toLocaleString('vi-VN') : quotaLabel + ': — / —') + ' · Reset: ' + (result.quotaResetDate || '—');
         ['webMatchFilterQuota', 'webMatchResultsQuota'].forEach(id => { el(id).textContent = quotaText; });
         if (!result.ok) throw new Error(result.message || 'Không thể xử lý yêu cầu.');
         return result;
@@ -46,7 +47,7 @@
     }
     function lock(value) {
         busy = value;
-        ['webMatchSearch', 'webMatchFilterClose', 'webMatchBack', 'webMatchResultsClose', 'webMatchSelectAll', 'webMatchTeamsBack', 'webMatchTeamsCreate'].forEach(id => { el(id).disabled = value; });
+        ['webMatchSourceOdds', 'webMatchSourceFootball', 'webMatchSourceClose', 'webMatchChangeSource', 'webMatchSearch', 'webMatchFilterClose', 'webMatchBack', 'webMatchResultsClose', 'webMatchSelectAll', 'webMatchTeamsBack', 'webMatchTeamsCreate'].forEach(id => { el(id).disabled = value; });
         el('webMatchTeamList').querySelectorAll('select,input').forEach(x => { x.disabled = value; });
         el('webMatchList').querySelectorAll('input').forEach(x => { x.disabled = value; });
         el('webMatchDays').querySelectorAll('button').forEach(x => { x.disabled = value; });
@@ -56,6 +57,19 @@
     window.webMatchOpen = async function () {
         if (busy) return;
         opener = document.activeElement;
+        show('webMatchSource');
+    };
+    async function chooseSource(value) {
+        if (busy) return;
+        source = value; loaded = false; snapshot = ''; pendingIds = []; teamChoices = {}; newTeamCodes = {};
+        el('webMatchList').replaceChildren();
+        el('webMatchLeague').replaceChildren();
+        const placeholder = document.createElement('option'); placeholder.value = ''; placeholder.textContent = 'Chọn giải đấu'; el('webMatchLeague').appendChild(placeholder);
+        const name = source === 'api-football' ? 'API-Football' : 'The Odds API';
+        el('webMatchFilterTitle').textContent = 'Lấy trận đấu từ ' + name;
+        el('webMatchResultsTitle').textContent = 'Chọn trận đấu từ ' + name;
+        el('webMatchSourceNote').textContent = source === 'api-football' ? 'Lấy danh sách trận cũng tính lượt gọi API. Quyền truy cập mùa giải và kèo phụ thuộc gói tài khoản.' : 'Lấy danh sách trận không mất credits. Chỉ lấy kèo cho các trận được chọn.';
+        ['webMatchFilterQuota', 'webMatchResultsQuota'].forEach(id => { el(id).textContent = source === 'api-football' ? 'Lượt gọi hôm nay: — / —' : 'Credits còn lại: — / —'; });
         renderDays(); show('webMatchFilter');
         if (loaded) return;
         lock(true); el('webMatchFilterMessage').textContent = 'Đang tải giải đấu…';
@@ -66,6 +80,10 @@
         } catch (e) { el('webMatchFilterMessage').textContent = e.message; }
         finally { lock(false); }
     };
+    el('webMatchSourceOdds').onclick = () => chooseSource('the-odds-api');
+    el('webMatchSourceFootball').onclick = () => chooseSource('api-football');
+    el('webMatchSourceClose').onclick = () => { if (!busy) show(null); };
+    el('webMatchChangeSource').onclick = () => { if (!busy) show('webMatchSource'); };
     el('webMatchSearch').onclick = async function () {
         if (busy) return;
         if (!el('webMatchLeague').value) { el('webMatchFilterMessage').textContent = 'Vui lòng chọn một giải đấu.'; el('webMatchLeague').focus(); return; }
@@ -82,7 +100,7 @@
                 label.append(check, text); row.appendChild(label);
                 el('webMatchList').appendChild(row);
             });
-            el('webMatchResultsMessage').textContent = data.matches.length ? 'Tìm thấy ' + data.matches.length + ' trận. Chọn trận để lấy kèo và tạo; chỉ các trận được chọn mới dùng credits lấy kèo.' : 'Không có trận phù hợp trong các ngày đã chọn.';
+            el('webMatchResultsMessage').textContent = data.matches.length ? 'Tìm thấy ' + data.matches.length + ' trận. Chọn trận để lấy kèo và tạo.' : 'Không có trận phù hợp trong các ngày đã chọn.';
             el('webMatchFilterMessage').textContent = ''; show('webMatchResults');
         } catch (e) { el('webMatchFilterMessage').textContent = e.message; }
         finally { lock(false); }
@@ -129,7 +147,7 @@
         el('webMatchTeamsMessage').textContent = ''; show('webMatchTeams');
     }
     async function createMatches(messageId) {
-        lock(true); el(messageId).textContent = 'Đang lấy kèo cho trận đã chọn và tạo trận đấu…';
+        lock(true); el(messageId).textContent = (source === 'api-football' ? 'Đang lấy kèo và tạo trận… Các lượt gọi được giãn theo giới hạn API-Football, vui lòng chờ.' : 'Đang lấy kèo cho trận đã chọn và tạo trận đấu…');
         try {
             const data = await api({ action: 'create', ids: pendingIds, snapshot, teamChoices, newTeamCodes });
             if (data.needsTeams) { el(messageId).textContent = ''; renderTeamChoices(data); return; }

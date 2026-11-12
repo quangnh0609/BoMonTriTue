@@ -1,6 +1,18 @@
+<div id="webMatchSource" class="hidden fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="webMatchSourceTitle">
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-5">
+    <h3 id="webMatchSourceTitle" class="font-bold text-lg mb-4">Chọn nguồn lấy trận và kèo</h3>
+    <div class="grid gap-3">
+      <button id="webMatchSourceOdds" type="button" class="border rounded-lg p-4 text-left hover:bg-blue-50 font-semibold">The Odds API</button>
+      <button id="webMatchSourceFootball" type="button" class="border rounded-lg p-4 text-left hover:bg-blue-50 font-semibold">API-Football</button>
+    </div>
+    <div class="flex justify-end mt-4"><button id="webMatchSourceClose" type="button" class="px-4 py-2 border rounded-lg">Đóng</button></div>
+  </div>
+</div>
 <div id="webMatchFilter" class="hidden fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="webMatchFilterTitle">
   <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-5 max-h-[90vh] overflow-auto">
     <h3 id="webMatchFilterTitle" class="font-bold text-lg mb-4">Lấy trận đấu từ web</h3>
+    <button id="webMatchChangeSource" type="button" class="text-sm text-blue-600 mb-2">Đổi nguồn dữ liệu</button>
+    <p id="webMatchSourceNote" class="text-xs text-gray-600 mb-3"></p>
     <p id="webMatchFilterQuota" class="text-xs text-gray-500 mb-3" aria-live="polite">Credits còn lại: — / — · Reset: —</p>
     <div class="mb-4"><span class="block text-sm mb-2">Ngày thi đấu (chọn một hoặc nhiều ngày)</span><div id="webMatchDays" role="group" aria-label="Ngày thi đấu" class="grid grid-cols-7 gap-1"></div></div>
     <label class="block text-sm mb-3">Giải đấu<select id="webMatchLeague" class="block w-full border rounded-lg p-2 mt-1"><option value="">Chọn giải đấu</option></select></label>
