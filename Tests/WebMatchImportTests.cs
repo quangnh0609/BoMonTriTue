@@ -86,6 +86,17 @@ public static class WebMatchImportTests
         string priorityJson = @"[{'key':'a','title':'A','markets':[{'key':'alternate_spreads','outcomes':[{'name':'Home FC','point':-1.5,'price':1.9},{'name':'Away FC','point':1.5,'price':1.9}]},{'key':'spreads','outcomes':[{'name':'Home FC','point':-0.5,'price':1.8},{'name':'Away FC','point':0.5,'price':2.0}]}]}]".Replace('\'', '"');
         Check(WebMatchImport.SelectMarkets(WebMatchImport.Rows(new JavaScriptSerializer().DeserializeObject(priorityJson)), "Home FC", "Away FC").Single().Line == -.5m, "Prefer main handicap over closer-priced alternate");
         Check(WebMatchImport.LikeLiteral("A_%[~B") == "A~_~%~[~~B", "Escape literal SQL LIKE wildcard characters");
-        Console.WriteLine("108 assertions passed.");
+        var today = new DateTime(2026, 12, 29);
+        var datesInput = new JavaScriptSerializer().Deserialize<System.Collections.Generic.Dictionary<string, object>>(@"{'dates':['2027-01-04','2026-12-29','2026-12-29'] }".Replace('\'', '"'));
+        var dates = WebMatchImport.SelectedDates(datesInput, today);
+        Check(dates.Count == 2 && dates[0] == today && dates[1] == today.AddDays(6), "Multiple dates deduplicate and cross year boundary");
+        foreach (string invalidDates in new[] { "[]", "[null]", "[12]", "['2026-12-28']", "['2027-01-05']", "['29/12/2026']" })
+        {
+            bool rejected = false;
+            try { WebMatchImport.SelectedDates(new JavaScriptSerializer().Deserialize<System.Collections.Generic.Dictionary<string, object>>(("{'dates':" + invalidDates + "}").Replace('\'', '"')), today); }
+            catch (InvalidOperationException) { rejected = true; }
+            Check(rejected, "Reject invalid date selection: " + invalidDates);
+        }
+        Console.WriteLine("115 assertions passed.");
     }
 }

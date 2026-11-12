@@ -1,20 +1,21 @@
 (function () {
     'use strict';
     const el = id => document.getElementById(id);
-    let busy = false, loaded = false, opener, snapshot = '', selectedDay = '';
+    let busy = false, loaded = false, opener, snapshot = '', selectedDays = new Set();
     const dialogs = ['webMatchFilter', 'webMatchResults', 'webMatchTeams'];
     let pendingIds = [], teamChoices = {}, newTeamCodes = {}, requiredTeams = [];
-    function renderDays() {
+    function renderDays(defaultSelection = true) {
         const today = new Date(Date.now() + 7 * 3600000).toISOString().slice(0, 10);
         const dates = Array.from({ length: 7 }, (_, i) => new Date(Date.parse(today + 'T00:00:00Z') + i * 86400000).toISOString().slice(0, 10));
-        if (!dates.includes(selectedDay)) selectedDay = today;
+        selectedDays = new Set(Array.from(selectedDays).filter(day => dates.includes(day)));
+        if (defaultSelection && !selectedDays.size) selectedDays.add(today);
         el('webMatchDays').replaceChildren();
         dates.forEach(day => {
             const button = document.createElement('button'); button.type = 'button'; button.dataset.day = day;
             button.textContent = day.slice(8, 10) + '/' + day.slice(5, 7);
-            button.setAttribute('aria-pressed', String(day === selectedDay));
-            button.className = 'py-2 rounded-lg border text-xs font-semibold ' + (day === selectedDay ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 hover:bg-blue-50');
-            button.onclick = () => { if (!busy) { selectedDay = day; renderDays(); el('webMatchDays').querySelector('[data-day="' + day + '"]').focus(); } };
+            button.setAttribute('aria-pressed', String(selectedDays.has(day)));
+            button.className = 'py-2 rounded-lg border text-xs font-semibold ' + (selectedDays.has(day) ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 hover:bg-blue-50');
+            button.onclick = () => { if (!busy) { if (selectedDays.has(day)) selectedDays.delete(day); else selectedDays.add(day); renderDays(false); el('webMatchDays').querySelector('[data-day="' + day + '"]').focus(); } };
             el('webMatchDays').appendChild(button);
         });
     }
@@ -39,7 +40,7 @@
         const checks = Array.from(el('webMatchList').querySelectorAll('input'));
         const n = selected().length;
         el('webMatchCreate').disabled = busy || n === 0;
-        el('webMatchCreate').textContent = busy ? 'Đang xử lý…' : 'Tạo trận đấu (' + n + ')';
+        el('webMatchCreate').textContent = busy ? 'Đang xử lý…' : 'Lấy kèo và tạo (' + n + ')';
         el('webMatchSelectAll').checked = n > 0 && n === checks.length;
         el('webMatchSelectAll').indeterminate = n > 0 && n < checks.length;
     }
@@ -68,38 +69,20 @@
     el('webMatchSearch').onclick = async function () {
         if (busy) return;
         if (!el('webMatchLeague').value) { el('webMatchFilterMessage').textContent = 'Vui lòng chọn một giải đấu.'; el('webMatchLeague').focus(); return; }
-        lock(true); el('webMatchFilterMessage').textContent = 'Đang lấy trận và phân tích kèo…';
+        if (!selectedDays.size) { el('webMatchFilterMessage').textContent = 'Vui lòng chọn ít nhất một ngày.'; return; }
+        lock(true); el('webMatchFilterMessage').textContent = 'Đang lấy danh sách trận…';
         try {
-            const data = await api({ action: 'search', date: selectedDay, league: el('webMatchLeague').value });
+            const data = await api({ action: 'search', dates: Array.from(selectedDays).sort(), league: el('webMatchLeague').value });
             snapshot = data.snapshot; teamChoices = {}; newTeamCodes = {}; pendingIds = []; el('webMatchList').replaceChildren();
             data.matches.forEach(m => {
                 const row = document.createElement('div'); row.className = 'p-3 border-b';
                 const label = document.createElement('label'); label.className = 'flex gap-3 items-start cursor-pointer';
                 const check = document.createElement('input'); check.type = 'checkbox'; check.value = m.Id; check.onchange = update;
-                const text = document.createElement('span'); text.className = 'font-semibold'; text.textContent = m.Time.split(' ')[0] + ' | ' + m.Home + ' – ' + m.Away;
+                const text = document.createElement('span'); text.className = 'font-semibold'; text.textContent = m.Time + ' | ' + m.Home + ' – ' + m.Away;
                 label.append(check, text); row.appendChild(label);
-                const table = document.createElement('table'); table.className = 'w-full mt-2 text-xs text-left';
-                const head = document.createElement('thead'); const heading = document.createElement('tr');
-                ['Loại kèo', 'H1', 'FT'].forEach(title => { const th = document.createElement('th'); th.scope = 'col'; th.className = 'px-2 py-1 text-gray-500 font-medium'; th.textContent = title; heading.appendChild(th); });
-                head.appendChild(heading); table.appendChild(head);
-                const body = document.createElement('tbody');
-                const types = { '0': 'Tài xỉu góc', '1': 'Chấp góc', '2': 'Tài xỉu bàn thắng', '3': 'Chấp bàn thắng', '4': '1X2', '5': 'Tài xỉu thẻ', '6': 'Chấp thẻ' };
-                const value = market => {
-                    if (!market) return '—';
-                    if (market.Line === null || market.Line === undefined) return [market.Home, market.Draw, market.Away].map(x => Number(x).toFixed(1)).join(' / ');
-                    const line = Number(market.Line);
-                    return (['1', '3', '6'].includes(market.Code[0]) && line > 0 ? '+' : '') + String(line);
-                };
-                Object.keys(types).forEach(type => {
-                    const h1 = m.Markets.find(k => k.Code === type + '1'), ft = m.Markets.find(k => k.Code === type + '3');
-                    if (!h1 && !ft) return;
-                    const tr = document.createElement('tr'); tr.className = 'border-t border-gray-100';
-                    [types[type], value(h1), value(ft)].forEach(text => { const td = document.createElement('td'); td.className = 'px-2 py-1'; td.textContent = text; tr.appendChild(td); });
-                    body.appendChild(tr);
-                });
-                table.appendChild(body); row.appendChild(table); el('webMatchList').appendChild(row);
+                el('webMatchList').appendChild(row);
             });
-            el('webMatchResultsMessage').textContent = data.matches.length ? 'Tìm thấy ' + data.matches.length + ' trận.' : 'Không có trận phù hợp trong ngày đã chọn.';
+            el('webMatchResultsMessage').textContent = data.matches.length ? 'Tìm thấy ' + data.matches.length + ' trận. Chọn trận để lấy kèo và tạo; chỉ các trận được chọn mới dùng credits lấy kèo.' : 'Không có trận phù hợp trong các ngày đã chọn.';
             el('webMatchFilterMessage').textContent = ''; show('webMatchResults');
         } catch (e) { el('webMatchFilterMessage').textContent = e.message; }
         finally { lock(false); }
@@ -146,7 +129,7 @@
         el('webMatchTeamsMessage').textContent = ''; show('webMatchTeams');
     }
     async function createMatches(messageId) {
-        lock(true); el(messageId).textContent = 'Đang tạo trận đấu…';
+        lock(true); el(messageId).textContent = 'Đang lấy kèo cho trận đã chọn và tạo trận đấu…';
         try {
             const data = await api({ action: 'create', ids: pendingIds, snapshot, teamChoices, newTeamCodes });
             if (data.needsTeams) { el(messageId).textContent = ''; renderTeamChoices(data); return; }

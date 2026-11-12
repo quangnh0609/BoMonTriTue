@@ -70,6 +70,22 @@ public static class WebMatchImport
             throw new InvalidOperationException("Chọn từ 1 đến 100 trận trong danh sách.");
         return items.Cast<string>().Distinct(StringComparer.Ordinal).ToList();
     }
+    public static List<DateTime> SelectedDates(Dictionary<string, object> input, DateTime today)
+    {
+        object value;
+        var items = input.TryGetValue("dates", out value) ? value as IList : null;
+        if (items == null || items.Count == 0 || items.Count > 7)
+            throw new InvalidOperationException("Chọn ít nhất một ngày trong 7 ngày tính từ hôm nay.");
+        var dates = new List<DateTime>();
+        foreach (object item in items)
+        {
+            DateTime date;
+            if (!(item is string) || !DateTime.TryParseExact((string)item, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out date) || date < today.Date || date > today.Date.AddDays(6))
+                throw new InvalidOperationException("Chọn ngày trong 7 ngày tính từ hôm nay.");
+            dates.Add(date);
+        }
+        return dates.Distinct().OrderBy(date => date).ToList();
+    }
     public class Market
     {
         public string Code, Name, Bookmaker;

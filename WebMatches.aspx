@@ -65,11 +65,9 @@
     }
     void Search(Dictionary<string, object> input)
     {
-        DateTime from;
         DateTime today = DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(7)).Date;
-        if (!DateTime.TryParseExact(WebMatchImport.Str(input, "date"), "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out from) || from < today || from > today.AddDays(6))
-            throw new InvalidOperationException("Chọn ngày trong 7 ngày tính từ hôm nay.");
-        DateTime to = from.AddDays(1).AddSeconds(-1);
+        var dates = WebMatchImport.SelectedDates(input, today);
+        DateTime from = dates.Min(), to = dates.Max().AddDays(1).AddSeconds(-1);
         string league = WebMatchImport.Str(input, "league");
         if (!WebMatchImport.IsAllowedLeague(league)) throw new InvalidOperationException("Vui lòng chọn một giải đấu trong danh sách được hỗ trợ.");
         Session.Remove("WebMatchResults");
@@ -81,17 +79,14 @@
         var events = WebMatchImport.Rows(WebMatchImport.CachedGet(root + "/events?dateFormat=iso" + range, 120)).ToList();
         events = events.Where(r => {
             DateTimeOffset time = DateTimeOffset.Parse(WebMatchImport.Str(r, "commence_time"), CultureInfo.InvariantCulture);
-            return time >= start && time <= end && time > DateTimeOffset.UtcNow;
+            return dates.Contains(time.ToOffset(TimeSpan.FromHours(7)).Date) && time > DateTimeOffset.UtcNow;
         }).ToList();
         foreach (var item in events)
         {
             string id = WebMatchImport.Str(item, "id");
-            var raw = WebMatchImport.Obj(WebMatchImport.CachedGet(root + "/events/" + Uri.EscapeDataString(id) + "/odds?regions=eu&markets=h2h,spreads,totals,h2h_h1,spreads_h1,totals_h1,alternate_spreads_corners,alternate_totals_corners,alternate_spreads_cards,alternate_totals_cards&oddsFormat=decimal&dateFormat=iso", 120));
+            var raw = item;
             string home = WebMatchImport.Str(raw, "home_team"), away = WebMatchImport.Str(raw, "away_team");
-            var markets = WebMatchImport.SelectMarkets(WebMatchImport.Rows(raw["bookmakers"]), home, away);
-            WebMatchImport.ApplyFirstHalfRules(markets);
-            if (markets.Count == 0) continue;
-            result[id] = new WebMatchImport.Fixture { Id = id, League = WebMatchImport.Str(raw, "sport_title"), LeagueId = league, Season = "", Home = home, Away = away, HomeId = home, AwayId = away, Kickoff = DateTimeOffset.Parse(WebMatchImport.Str(raw, "commence_time"), CultureInfo.InvariantCulture), Markets = markets };
+            result[id] = new WebMatchImport.Fixture { Id = id, League = WebMatchImport.Str(raw, "sport_title"), LeagueId = league, Season = "", Home = home, Away = away, HomeId = home, AwayId = away, Kickoff = DateTimeOffset.Parse(WebMatchImport.Str(raw, "commence_time"), CultureInfo.InvariantCulture) };
         }
         Session["WebMatchResults"] = result;
         Session["WebMatchExpires"] = DateTime.UtcNow.AddMinutes(15);
@@ -186,6 +181,26 @@
             throw new InvalidOperationException("Danh sách đã hết hạn hoặc thay đổi. Vui lòng lọc lại.");
         var ids = WebMatchImport.SelectedIds(input);
         if (ids.Count == 0 || ids.Count > 100 || ids.Any(id => !results.ContainsKey(id))) throw new InvalidOperationException("Chọn từ 1 đến 100 trận trong danh sách.");
+        // Fetch odds only for the explicit selection, before opening a database transaction.
+        foreach (string id in ids)
+        {
+            var f = results[id];
+            if (!WebMatchImport.IsAllowedLeague(f.LeagueId) || f.Kickoff <= DateTimeOffset.UtcNow)
+                throw new InvalidOperationException("Có trận đã bắt đầu hoặc giải không được hỗ trợ. Vui lòng lọc lại.");
+        }
+        foreach (string id in ids)
+        {
+            var f = results[id];
+            if (f.Markets.Count > 0) continue;
+            var raw = WebMatchImport.Obj(WebMatchImport.CachedGet("sports/" + f.LeagueId + "/events/" + Uri.EscapeDataString(id) + "/odds?regions=eu&markets=h2h,spreads,totals,h2h_h1,spreads_h1,totals_h1,alternate_spreads_corners,alternate_totals_corners,alternate_spreads_cards,alternate_totals_cards&oddsFormat=decimal&dateFormat=iso", 120));
+            if (WebMatchImport.Str(raw, "home_team") != f.Home || WebMatchImport.Str(raw, "away_team") != f.Away)
+                throw new InvalidOperationException("Thông tin trận đã thay đổi. Vui lòng lọc lại.");
+            f.Kickoff = DateTimeOffset.Parse(WebMatchImport.Str(raw, "commence_time"), CultureInfo.InvariantCulture);
+            f.Markets = WebMatchImport.SelectMarkets(WebMatchImport.Rows(raw["bookmakers"]), f.Home, f.Away);
+            WebMatchImport.ApplyFirstHalfRules(f.Markets);
+            if (f.Markets.Count == 0)
+                throw new InvalidOperationException("Trận " + f.Home + " – " + f.Away + " chưa có kèo phù hợp. Bỏ chọn trận này và thử lại.");
+        }
         using (var conn = new SqlConnection(Connection))
         {
             conn.Open(); using (var tx = conn.BeginTransaction(IsolationLevel.Serializable))
