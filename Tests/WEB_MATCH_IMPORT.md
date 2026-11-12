@@ -2,7 +2,7 @@
 
 Đặt API key trong `TheOddsApiKey` ở web.config. Nguồn: https://the-odds-api.com/liveapi/guides/v4/ ; mã market: https://the-odds-api.com/sports-odds-data/betting-markets.html .
 
-Popup chọn một trong 7 ngày từ hôm nay theo UTC+7 và một trong 10 giải được phép. Backend kiểm tra lại cả ngày lẫn giải. Gọi `/events` cho ngày đã chọn, sau đó `/events/{id}/odds` cho mỗi trận sắp diễn ra, vùng eu, odds decimal. Cache 120 giây; tạo trận không gọi thêm API.
+Popup chọn một trong 7 ngày từ hôm nay theo UTC+7 và một trong 14 giải được phép, gồm UEFA Nations League, Euro, FIFA World Cup và Cúp bóng đá châu Phi (AFCON). Mã giải theo danh mục https://the-odds-api.com/sports-odds-data/sports-apis.html ; dữ liệu trận phụ thuộc lịch thi đấu và nguồn API. Backend kiểm tra lại cả ngày lẫn giải. Gọi `/events` cho ngày đã chọn, sau đó `/events/{id}/odds` cho mỗi trận sắp diễn ra, vùng eu, odds decimal. Cache 120 giây; tạo trận không gọi thêm API.
 
 Luôn yêu cầu h2h, spreads, totals, h2h_h1, spreads_h1, totals_h1 và alternate_spreads_corners, alternate_totals_corners, alternate_spreads_cards, alternate_totals_cards. Không yêu cầu alternate_spreads/alternate_totals bàn thắng. API dùng tên alternate cho market góc/thẻ; adapter chọn một mốc có hai giá gần nhau nhất, không tạo mọi mốc. Với market có cả bản chính/phụ, ưu tiên bản chính trước khi so chênh lệch giá. Kèo góc/thẻ/từng hiệp phụ thuộc nguồn. Gọi từng trận tiêu tốn credits theo market/vùng trả về.
 

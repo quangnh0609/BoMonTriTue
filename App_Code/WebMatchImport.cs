@@ -49,7 +49,11 @@ public static class WebMatchImport
             new LeagueOption { id = "soccer_germany_bundesliga", name = "Bundesliga (Đức)" },
             new LeagueOption { id = "soccer_efl_champ", name = "Championship (Anh)" },
             new LeagueOption { id = "soccer_england_efl_cup", name = "Cúp EFL (Anh)" },
-            new LeagueOption { id = "soccer_spain_copa_del_rey", name = "Cúp Nhà vua Tây Ban Nha (Copa del Rey)" }
+            new LeagueOption { id = "soccer_spain_copa_del_rey", name = "Cúp Nhà vua Tây Ban Nha (Copa del Rey)" },
+            new LeagueOption { id = "soccer_uefa_nations_league", name = "UEFA Nations League" },
+            new LeagueOption { id = "soccer_uefa_european_championship", name = "Euro (UEFA European Championship)" },
+            new LeagueOption { id = "soccer_fifa_world_cup", name = "World Cup (FIFA)" },
+            new LeagueOption { id = "soccer_africa_cup_of_nations", name = "Cúp bóng đá châu Phi (AFCON)" }
         };
     }
     public static bool IsAllowedLeague(string key)
