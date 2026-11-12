@@ -74,6 +74,9 @@ public static class WebMatchImport
     {
         object value;
         var items = input.TryGetValue("dates", out value) ? value as IList : null;
+        // Older open tabs send a single date. Keep it valid while the browser reloads the updated script.
+        if (!input.ContainsKey("dates") && input.TryGetValue("date", out value) && value is string)
+            items = new string[] { (string)value };
         if (items == null || items.Count == 0 || items.Count > 7)
             throw new InvalidOperationException("Chọn ít nhất một ngày trong 7 ngày tính từ hôm nay.");
         var dates = new List<DateTime>();

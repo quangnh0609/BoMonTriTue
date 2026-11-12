@@ -97,6 +97,13 @@ public static class WebMatchImportTests
             catch (InvalidOperationException) { rejected = true; }
             Check(rejected, "Reject invalid date selection: " + invalidDates);
         }
-        Console.WriteLine("115 assertions passed.");
+        var legacyInput = new System.Collections.Generic.Dictionary<string, object> { { "date", "2026-12-29" } };
+        Check(WebMatchImport.SelectedDates(legacyInput, today).Single() == today, "Accept single-date requests from older open tabs");
+        legacyInput["dates"] = new string[0];
+        bool emptyRejected = false;
+        try { WebMatchImport.SelectedDates(legacyInput, today); }
+        catch (InvalidOperationException) { emptyRejected = true; }
+        Check(emptyRejected, "Do not use legacy date to override an explicit empty selection");
+        Console.WriteLine("117 assertions passed.");
     }
 }

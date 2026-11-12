@@ -1022,7 +1022,7 @@
 		<uc:AddMatch runat="server" ID="ucAddMatch" OnMatchAdded="ucAddMatch_MatchAdded" />
 		<!--#include file="WebMatchDialogs.html" -->
         <script>window.webMatchToken = '<%= Session["WebMatchToken"] %>';</script>
-        <script src="Scripts/web-match-import.js"></script>
+        <script src="Scripts/web-match-import.js?v=<%= System.IO.File.GetLastWriteTimeUtc(Server.MapPath("~/Scripts/web-match-import.js")).Ticks %>"></script>
 		<uc:ResultMatch runat="server" ID="ucResultMatch" />
 		<uc:TicketMatch runat="server" ID="ucTicketMatch" />
     </form>
