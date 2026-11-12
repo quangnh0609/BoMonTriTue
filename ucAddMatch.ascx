@@ -122,7 +122,7 @@
                     <div class="grid grid-cols-2 gap-3 mb-4 items-start">
                         <div class="relative">
                             <asp:TextBox ID="season" runat="server" 
-                                onkeyup="filterData(this, 'listSeason')" 
+                                oninput="filterData(this, 'listSeason')"
                                 onfocus="showAllData(this, 'listSeason')"
                                 onblur="validateSelection(this, 'listSeason')" 
                                 autocomplete="off" placeholder="Giải đấu"
@@ -146,7 +146,7 @@
                     <div class="grid grid-cols-2 gap-3 mb-5 items-start">
                         <div class="relative">
                             <asp:TextBox ID="home" runat="server" 
-                                onkeyup="filterData(this, 'listHome')" 
+                                oninput="filterData(this, 'listHome')"
                                 onfocus="showAllData(this, 'listHome')"
                                 onblur="validateSelection(this, 'listHome')" 
                                 autocomplete="off" placeholder="Home"
@@ -157,7 +157,7 @@
 
                         <div class="relative">
                             <asp:TextBox ID="way" runat="server" 
-                                onkeyup="filterData(this, 'listWay')" 
+                                oninput="filterData(this, 'listWay')"
                                 onfocus="showAllData(this, 'listWay')"
                                 onblur="validateSelection(this, 'listWay')" 
                                 autocomplete="off" placeholder="Way"
@@ -383,26 +383,7 @@
 
     // Kiểm tra một field có khớp đúng 1 item trong danh sách không
     function isValidSelection(inputValue, listId) {
-        const val = removeAccents(inputValue.trim()).toLowerCase();
-        if (val === '') return false;
-
-        const data = listId === 'listSeason' ? dataSeason : dataTeam;
-        const codeKey = listId === 'listSeason' ? 'season' : 'team';
-        const nameKey = listId === 'listSeason' ? 'season_name' : 'team_name';
-
-        const matches = data.filter(item => {
-            const codeMatch = removeAccents(item[codeKey] || '').toLowerCase();
-            const nameMatch = removeAccents(item[nameKey] || '').toLowerCase();
-            return codeMatch.includes(val) || nameMatch.includes(val);
-        });
-
-        if (matches.length === 1) return true;
-        if (matches.length > 1) {
-            return matches.some(item =>
-                removeAccents(item[codeKey]).toLowerCase() === val
-            );
-        }
-        return false;
+        return !!resolveMatchSelection(inputValue, listId);
     }
 
     // Validate trước khi submit
@@ -769,7 +750,7 @@
     }, true);
     
     function removeAccents(str) {
-        return str.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toLowerCase();
+        return String(str || "").normalize('NFD').replace(/[\u0300-\u036f]/g, "").replace(/[đĐ]/g, "d").toLowerCase().trim().replace(/\s+/g, " ");
     }
     
     function filterData(input, listId, forceAll = false) {
@@ -816,7 +797,7 @@
         if (input) {
             input.value = codeVal;
             // Đã là code hợp lệ, ẩn lỗi luôn không cần validate lại
-            var msgEl = document.getElementById('msg_' + inputId);
+            var msgEl = matchSelectionMessage(input, listId);
             if (msgEl) msgEl.classList.add('hidden');
         } else {
             console.error("Không tìm thấy input với ID: " + inputId);
@@ -826,54 +807,38 @@
         if (list) list.classList.add('hidden');
     }
 
+    function resolveMatchSelection(value, listId) {
+        const term = removeAccents(value);
+        if (!term) return null;
+        const data = listId === 'listSeason' ? dataSeason : dataTeam;
+        const codeKey = listId === 'listSeason' ? 'season' : 'team';
+        const nameKey = listId === 'listSeason' ? 'season_name' : 'team_name';
+        const exactCode = data.find(item => removeAccents(item[codeKey]) === term);
+        if (exactCode) return exactCode;
+        const exactNames = data.filter(item => removeAccents(item[nameKey]) === term);
+        if (exactNames.length === 1) return exactNames[0];
+        const matches = data.filter(item => removeAccents(item[codeKey]).includes(term) || removeAccents(item[nameKey]).includes(term));
+        return matches.length === 1 ? matches[0] : null;
+    }
+
+    function matchSelectionMessage(input, listId) {
+        return document.getElementById('msg_' + (listId === 'listSeason' ? 'season' : listId === 'listHome' ? 'home' : 'way'));
+    }
+
     function validateSelection(input, listId) {
         setTimeout(() => {
-            const val = removeAccents(input.value.trim());
-            if (val === "") return;
-
-            const data = listId === 'listSeason' ? dataSeason : dataTeam;
-            const codeKey = listId === 'listSeason' ? 'season' : 'team';
-            const nameKey = listId === 'listSeason' ? 'season_name' : 'team_name';
-
-            const searchTerm = removeAccents(val).toLowerCase();
-            const matches = data.filter(item => {
-                const codeMatch = removeAccents(item[codeKey] || "").toLowerCase();
-                const nameMatch = removeAccents(item[nameKey] || "").toLowerCase();
-                
-                return codeMatch.includes(searchTerm) || nameMatch.includes(searchTerm);
-            });
-            
-            const msgElement = document.getElementById('msg_' + input.id);
-            
-            if (matches.length === 1) {
-                input.value = matches[0][codeKey];
-                if (msgElement) msgElement.classList.add('hidden');
-            } else if (matches.length > 1) {
-                const exactMatch = matches.find(item => 
-                    removeAccents(item[codeKey]).toLowerCase() === removeAccents(val).toLowerCase()
-                );
-
-                if (exactMatch) {
-                    input.value = exactMatch[codeKey];
-                    if (msgElement) msgElement.classList.add('hidden');
-                } else {
-                    if (msgElement) {
-                        msgElement.classList.remove('hidden');
-                        msgElement.innerText = "Dữ liệu không tồn tại";
-                    }
-                }
-            } else {
-                if (msgElement) {
-                    msgElement.classList.remove('hidden');
-                    msgElement.innerText = "Dữ liệu không tồn tại";
-                }
+            const item = resolveMatchSelection(input.value, listId);
+            const msg = matchSelectionMessage(input, listId);
+            if (item) input.value = item[listId === 'listSeason' ? 'season' : 'team'];
+            if (msg) {
+                msg.classList.toggle('hidden', !!item || !input.value.trim());
+                if (!item && input.value.trim()) msg.innerText = 'Chọn một kết quả trong danh sách';
             }
-
-            const listElement = document.getElementById(listId);
-            if (listElement) listElement.classList.add('hidden');
+            const list = document.getElementById(listId);
+            if (list) list.classList.add('hidden');
         }, 200);
     }
-    
+
     function showAllData(input, listId) {
         document.querySelectorAll('[id^="list"]').forEach(el => el.classList.add('hidden'));
         filterData(input, listId, true); 

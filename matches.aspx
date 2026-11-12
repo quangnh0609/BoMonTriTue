@@ -19,9 +19,11 @@
         if (!IsPostBack) { 
             if (Session["WebMatchToken"] == null) Session["WebMatchToken"] = Guid.NewGuid().ToString("N");
             BindMatchTable();
-			LoadSmartData();
+
         }
         
+        LoadSmartData();
+
         string fixF5 = "<script>if(window.history.replaceState){window.history.replaceState(null,null,window.location.href);}</sc" + "ript>";
         ClientScript.RegisterStartupScript(this.GetType(), "FixF5", fixF5);
     }
@@ -520,7 +522,7 @@
 				daTeam.Fill(dtTeam);
 
 				// 3. Chuyển DataTable thành JSON (Dùng vòng lặp Dictionary để tránh lỗi thư viện)
-				var serializer = new System.Web.Script.Serialization.JavaScriptSerializer();
+				var serializer = new System.Web.Script.Serialization.JavaScriptSerializer { MaxJsonLength = Int32.MaxValue };
 				
 				var listS = new List<Dictionary<string, object>>();
 				foreach (DataRow r in dtSeason.Rows) {
@@ -542,10 +544,10 @@
 				string script = "var dataSeason = " + jsonS + "; var dataTeam = " + jsonT + ";";
 				
 				script += "var dataSeasonAll = dataSeason; var dataTeamAll = dataTeam; dataSeason = dataSeasonAll.filter(function(x){return x.is_active;}); dataTeam = dataTeamAll.filter(function(x){return x.is_active;});";
-                ClientScript.RegisterStartupScript(this.GetType(), "InitData", script, true);
+                System.Web.UI.ScriptManager.RegisterStartupScript(this, this.GetType(), "InitData", script, true);
 			}
 		} catch (Exception ex) {
-			// Ghi log lỗi ở đây để check nếu SQL có vấn đề
+			System.Diagnostics.Trace.TraceError("Load match catalogs: {0}", ex);
 		}
 	}
 	
