@@ -26,15 +26,17 @@ public static class WebMatchPreviewTests
     public static void Main()
     {
         var page = new WebMatchesPreviewHarness();
+        var state = new WebMatchState("test-token");
+        page.GetType().GetField("importState", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(page, state);
         page.GetType().GetField("source", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(page, "api-football");
         var fixture = new WebMatchImport.Fixture { Source = "api-football", Id = "123", LeagueId = "39", Home = "H", Away = "A", Kickoff = DateTimeOffset.UtcNow.AddDays(1) };
         fixture.Markets.Add(new WebMatchImport.Market { Code = "33", Line = .5m, Home = .9m, Away = .9m, Bookmaker = "Test" });
         fixture.Markets.Add(new WebMatchImport.Market { Code = "32", Line = 99m, Home = .9m, Away = .9m });
         var results = new Dictionary<string, WebMatchImport.Fixture> { { "123", fixture } };
-        page.Session["WebMatchResults"] = results;
-        page.Session["WebMatchExpires"] = DateTime.UtcNow.AddMinutes(15);
-        page.Session["WebMatchSource"] = "api-football";
-        page.Session["WebMatchSnapshot"] = "snapshot";
+        state.Values["WebMatchResults"] = results;
+        state.Values["WebMatchExpires"] = DateTime.UtcNow.AddMinutes(15);
+        state.Values["WebMatchSource"] = "api-football";
+        state.Values["WebMatchSnapshot"] = "snapshot";
         var input = new Dictionary<string, object> { { "ids", new string[] { "123" } }, { "snapshot", "snapshot" } };
         Reject(page, input, "xem trước");
         Call(page, "Preview", input);
@@ -60,10 +62,10 @@ public static class WebMatchPreviewTests
         input["ids"] = new string[] { "123", "456" };
         Reject(page, input, "xem trước");
         input["ids"] = new string[] { "123" };
-        page.Session["WebMatchExpires"] = DateTime.UtcNow.AddSeconds(-1);
+        state.Values["WebMatchExpires"] = DateTime.UtcNow.AddSeconds(-1);
         Reject(page, input, "hết hạn");
-        page.Session["WebMatchExpires"] = DateTime.UtcNow.AddMinutes(15);
-        page.Session["WebMatchSource"] = "the-odds-api";
+        state.Values["WebMatchExpires"] = DateTime.UtcNow.AddMinutes(15);
+        state.Values["WebMatchSource"] = "the-odds-api";
         Reject(page, input, "Nguồn dữ liệu");
         fixture.Source = "the-odds-api";
         page.GetType().GetField("source", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(page, "the-odds-api");

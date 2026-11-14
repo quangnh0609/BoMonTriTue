@@ -36,9 +36,10 @@ async function run(responses) {
     result = await run([changed, { ok: true, token: 'newer' }, changed]);
     assert(result.error);
     assert.equal(result.calls.length, 3, 'Repeated mismatch must stop');
-    result = await run([new Error('timeout')]);
+    result = await run([new Error('timeout'), {ok:false,code:'WEB_MATCH_OPERATION_MISSING'}]);
     assert(result.error);
-    assert.equal(result.calls.length, 1, 'Never replay an uncertain create');
+    assert.equal(result.calls.length, 2, 'Only check status for an uncertain create');
+    assert.equal(JSON.parse(result.calls[1].options.body).action, 'status', 'Never replay an uncertain create');
     result = await run([changed, { ok: false, message: 'Login required' }]);
     assert.equal(result.error.message, 'Login required');
     assert.equal(result.calls.length, 2);

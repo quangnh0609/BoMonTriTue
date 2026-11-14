@@ -508,6 +508,8 @@
 	}
 	
 	private void LoadSmartData() {
+        var scriptManager = System.Web.UI.ScriptManager.GetCurrent(this);
+        if (IsPostBack && scriptManager != null && scriptManager.IsInAsyncPostBack) return;
 		try {
 			string connStr = ConfigurationManager.ConnectionStrings["MyDbConn"].ConnectionString;
 			using (SqlConnection conn = new SqlConnection(connStr)) {
@@ -1064,20 +1066,20 @@
         // Load dữ liệu cho datalist
         let teamData = [];
         let seasonData = [];
+        let teamDropdownRendered = false, seasonDropdownRendered = false;
         
         window.addEventListener('load', function() {
             if (typeof dataTeam !== 'undefined') {
                 teamData = dataTeamAll;
-                renderTeamDropdown(teamData);
             }
             
             if (typeof dataSeason !== 'undefined') {
                 seasonData = dataSeasonAll;
-                renderSeasonDropdown(seasonData);
             }
         });
         
         function renderTeamDropdown(data) {
+            teamDropdownRendered = true;
             const dropdown = document.getElementById('teamDropdown');
             let html = '<div class="p-2 hover:bg-blue-50 cursor-pointer font-bold text-sm" onclick="selectTeam(\'\', \'-- Chọn đội --\')">-- Chọn đội --</div>';
             data.forEach(item => {
@@ -1087,6 +1089,7 @@
         }
         
         function renderSeasonDropdown(data) {
+            seasonDropdownRendered = true;
             const dropdown = document.getElementById('seasonDropdown');
             let html = '<div class="p-2 hover:bg-blue-50 cursor-pointer font-bold text-sm" onclick="selectSeason(\'\', \'-- Chọn giải đấu --\')">-- Chọn giải đấu --</div>';
             data.forEach(item => {
@@ -1096,11 +1099,13 @@
         }
         
         function showTeamDropdown() {
+            if (!teamDropdownRendered) renderTeamDropdown(teamData);
             document.getElementById('teamDropdown').classList.remove('hidden');
             document.getElementById('seasonDropdown').classList.add('hidden');
         }
         
         function showSeasonDropdown() {
+            if (!seasonDropdownRendered) renderSeasonDropdown(seasonData);
             document.getElementById('seasonDropdown').classList.remove('hidden');
             document.getElementById('teamDropdown').classList.add('hidden');
         }

@@ -1,4 +1,4 @@
-<%@ Page Language="C#" %>
+<%@ Page Language="C#" EnableSessionState="ReadOnly" %>
 <%@ Import Namespace="System.Data" %>
 <%@ Import Namespace="System.Data.SqlClient" %>
 <%@ Import Namespace="System.Configuration" %>
@@ -7,6 +7,10 @@
 <%@ Import Namespace="System.Globalization" %>
 <script runat="server">
     private bool webImportAdmin;
+    private int currentUserId;
+    private WebMatchState importState;
+    private WebMatchOperations.Operation currentOperation;
+    string OperationScope { get { return Session.SessionID + ":" + currentUserId.ToString(CultureInfo.InvariantCulture); } }
     private string source = "the-odds-api";
     bool AllowedLeague(string league) { return source == "api-football" ? ApiFootballImport.GetLeagues().Any(l => l.id == league) : WebMatchImport.IsAllowedLeague(league); }
     string MatchId(WebMatchImport.Fixture fixture) { return WebMatchImport.CompactId("OM", fixture.Source == "api-football" ? "api-football:" + fixture.Id : fixture.Id); }
@@ -20,20 +24,34 @@
         data["quotaUnit"] = source == "api-football" ? "Lượt gọi hôm nay" : "Credits còn lại";
         var today = DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(7));
         data["quotaResetDate"] = source == "api-football" ? "Theo hạn mức ngày của tài khoản" : new DateTime(today.Year, today.Month, 1).AddMonths(1).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
-        Response.Write(serializer.Serialize(data));
+        string json = serializer.Serialize(data);
+        if (currentOperation != null) WebMatchOperations.Complete(currentOperation, json);
+        Response.Write(json);
     }
     protected void Page_Load(object sender, EventArgs e)
     {
         Response.ContentType = "application/json";
+        Response.BufferOutput = true;
         Server.ScriptTimeout = 600;
         Response.Cache.SetCacheability(HttpCacheability.NoCache);
         try
         {
-            if (Session["UserID"] == null) { Response.StatusCode = 401; throw new InvalidOperationException("Vui lòng đăng nhập lại."); }
+            Int32.TryParse(Convert.ToString(Session["UserID"]), out currentUserId);
+            if (currentUserId <= 0 && Context.User != null && Context.User.Identity != null && Context.User.Identity.IsAuthenticated)
+            {
+                using (var conn = new SqlConnection(Connection))
+                using (var cmd = new SqlCommand("SELECT TOP 1 id FROM dbo.userinfo2 WHERE name=@name", conn))
+                {
+                    cmd.Parameters.AddWithValue("@name", Context.User.Identity.Name.Trim().ToUpperInvariant());
+                    conn.Open(); currentUserId = Convert.ToInt32(cmd.ExecuteScalar());
+                }
+            }
+            if (currentUserId <= 0) { Response.StatusCode = 401; throw new InvalidOperationException("Vui lòng đăng nhập lại."); }
+            importState = WebMatchState.Get(OperationScope, Convert.ToString(Session["WebMatchToken"]));
             using (var conn = new SqlConnection(Connection))
             using (var cmd = new SqlCommand("SELECT COUNT(1) FROM dbo.userinfo2 WHERE id = @id AND admin = 1", conn))
             {
-                cmd.Parameters.Add("@id", SqlDbType.Int).Value = Convert.ToInt32(Session["UserID"]);
+                cmd.Parameters.Add("@id", SqlDbType.Int).Value = currentUserId;
                 conn.Open();
                 webImportAdmin = Convert.ToInt32(cmd.ExecuteScalar()) > 0;
             }
@@ -46,7 +64,7 @@
             using (var conn = new SqlConnection(Connection))
             using (var cmd = new SqlCommand("SELECT dbo.bet_check_right(@id, 'bet_match_insert')", conn))
             {
-                conn.Open(); cmd.Parameters.AddWithValue("@id", Session["UserID"]);
+                conn.Open(); cmd.Parameters.AddWithValue("@id", currentUserId);
                 string allowed = Convert.ToString(cmd.ExecuteScalar());
                 if (allowed != "1" && !allowed.Equals("true", StringComparison.OrdinalIgnoreCase)) { Response.StatusCode = 403; throw new InvalidOperationException("Bạn không có quyền tạo trận đấu."); }
             }
@@ -55,12 +73,11 @@
             if (Request.HttpMethod == "GET" && Request.QueryString["action"] == "token")
             {
                 Response.Cache.SetNoStore();
-                if (Session["WebMatchToken"] == null) Session["WebMatchToken"] = Guid.NewGuid().ToString("N");
-                Reply(new { ok = true, token = Convert.ToString(Session["WebMatchToken"]) }); return;
+                Reply(new { ok = true, token = importState.Token }); return;
             }
             if (Request.HttpMethod != "POST") { Response.StatusCode = 405; throw new InvalidOperationException("Yêu cầu không hợp lệ."); }
             var input = new System.Web.Script.Serialization.JavaScriptSerializer().Deserialize<Dictionary<string, object>>(new System.IO.StreamReader(Request.InputStream).ReadToEnd());
-            if (WebMatchImport.Str(input, "token") != Convert.ToString(Session["WebMatchToken"]) || Session["WebMatchToken"] == null)
+            if (WebMatchImport.Str(input, "token") != importState.Token)
             {
                 Reply(new { ok = false, code = "WEB_MATCH_TOKEN_CHANGED", message = "Phiên làm việc đã thay đổi. Vui lòng tải lại trang." }); return;
             }
@@ -69,19 +86,48 @@
             if (requestedSource != "") source = requestedSource;
             if (source == "api-football") Server.ScriptTimeout = 1800;
             string action = WebMatchImport.Str(input, "action");
+            if (action == "status")
+            {
+                string id = WebMatchImport.Str(input, "operationId");
+                if (!System.Text.RegularExpressions.Regex.IsMatch(id, "^[a-f0-9]{32}$")) throw new InvalidOperationException("Mã lượt xử lý không hợp lệ.");
+                var saved = WebMatchOperations.Find(OperationScope, id);
+                if (saved == null) { Reply(new { ok = false, code = "WEB_MATCH_OPERATION_MISSING", message = "Không tìm thấy lượt xử lý trước đó. Dữ liệu có thể đã hết hạn hoặc máy chủ vừa khởi động lại." }); return; }
+                ReplyOperation(saved); return;
+            }
+            if (action != "leagues" && action != "search" && action != "preview" && action != "create") throw new InvalidOperationException("Thao tác không hợp lệ.");
+            string operationId = WebMatchImport.Str(input, "operationId");
+            if (operationId != "")
+            {
+                var payload = new SortedDictionary<string, object>();
+                foreach (var item in input) if (item.Key != "token" && item.Key != "operationId") payload[item.Key] = item.Value;
+                string signature = WebMatchImport.CompactId("P", new System.Web.Script.Serialization.JavaScriptSerializer { MaxJsonLength = 10000000 }.Serialize(payload));
+                bool started;
+                var operation = WebMatchOperations.Begin(OperationScope, operationId, signature, out started);
+                if (!started) { ReplyOperation(operation); return; }
+                currentOperation = operation;
+            }
             if (action == "leagues")
             {
                 var leagues = source == "api-football" ? ApiFootballImport.GetLeagues() : WebMatchImport.GetLeagues();
                 if (source == "the-odds-api") { try { WebMatchImport.CachedGet("sports/", 120); } catch (InvalidOperationException) { } }
                 Reply(new { ok = true, leagues = leagues }); return;
             }
-            if (action == "search") { Search(input); return; }
-            if (action == "preview") { Preview(input); return; }
-            if (action == "create") { Create(input); return; }
+            lock (importState.SyncRoot)
+            {
+                if (action == "search") { Search(input); return; }
+                if (action == "preview") { Preview(input); return; }
+                if (action == "create") { Create(input); return; }
+            }
             throw new InvalidOperationException("Thao tác không hợp lệ.");
         }
         catch (InvalidOperationException ex) { Reply(new { ok = false, message = ex.Message }); }
         catch (Exception ex) { System.Diagnostics.Trace.TraceError("Web match import: {0}", ex); Reply(new { ok = false, message = "Không thể xử lý dữ liệu. Vui lòng thử lại hoặc liên hệ quản trị viên." }); }
+    }
+    void ReplyOperation(WebMatchOperations.Operation operation)
+    {
+        string json = operation.ResultJson;
+        if (json != null) Response.Write(json);
+        else Reply(new { ok = true, operationPending = true });
     }
     void Search(Dictionary<string, object> input)
     {
@@ -90,8 +136,8 @@
         DateTime from = dates.Min(), to = dates.Max().AddDays(1).AddSeconds(-1);
         string league = WebMatchImport.Str(input, "league");
         if (!AllowedLeague(league)) throw new InvalidOperationException("Vui lòng chọn một giải đấu trong danh sách được hỗ trợ.");
-        Session.Remove("WebMatchResults");
-        Session.Remove("WebMatchPreviewToken"); Session.Remove("WebMatchPreviewIds");
+        importState.Values.Remove("WebMatchResults");
+        importState.Values.Remove("WebMatchPreviewToken"); importState.Values.Remove("WebMatchPreviewIds");
         var result = new Dictionary<string, WebMatchImport.Fixture>();
         if (source == "api-football") result = ApiFootballImport.Search(dates, league);
         else
@@ -113,10 +159,10 @@
                 result[id] = new WebMatchImport.Fixture { Id = id, League = WebMatchImport.Str(raw, "sport_title"), LeagueId = league, Season = "", Home = home, Away = away, HomeId = home, AwayId = away, Kickoff = DateTimeOffset.Parse(WebMatchImport.Str(raw, "commence_time"), CultureInfo.InvariantCulture) };
             }
         }
-        Session["WebMatchSource"] = source;
-        Session["WebMatchResults"] = result;
-        Session["WebMatchExpires"] = DateTime.UtcNow.AddMinutes(15);
-        string snapshot = Guid.NewGuid().ToString("N"); Session["WebMatchSnapshot"] = snapshot;
+        importState.Values["WebMatchSource"] = source;
+        importState.Values["WebMatchResults"] = result;
+        importState.Values["WebMatchExpires"] = DateTime.UtcNow.AddMinutes(15);
+        string snapshot = Guid.NewGuid().ToString("N"); importState.Values["WebMatchSnapshot"] = snapshot;
         Reply(new { ok = true, snapshot = snapshot, matches = result.Values.OrderBy(f => f.Kickoff).ToList() });
     }
     List<Dictionary<string, object>> EntityOptions(SqlConnection conn, SqlTransaction tx, string table, string column, string where, string value, bool includeInactive = false)
@@ -208,10 +254,10 @@
     }
     Dictionary<string, WebMatchImport.Fixture> SelectedFixtures(Dictionary<string, object> input, out List<string> ids)
     {
-        var results = Session["WebMatchResults"] as Dictionary<string, WebMatchImport.Fixture>;
-        if (results == null || Session["WebMatchExpires"] == null || DateTime.UtcNow > (DateTime)Session["WebMatchExpires"] || WebMatchImport.Str(input, "snapshot") != Convert.ToString(Session["WebMatchSnapshot"]))
+        var results = importState.Values["WebMatchResults"] as Dictionary<string, WebMatchImport.Fixture>;
+        if (results == null || importState.Values["WebMatchExpires"] == null || DateTime.UtcNow > (DateTime)importState.Values["WebMatchExpires"] || WebMatchImport.Str(input, "snapshot") != Convert.ToString(importState.Values["WebMatchSnapshot"]))
             throw new InvalidOperationException("Danh sách đã hết hạn hoặc thay đổi. Vui lòng lọc lại.");
-        if (Convert.ToString(Session["WebMatchSource"]) != source || results.Values.Any(f => f.Source != source))
+        if (Convert.ToString(importState.Values["WebMatchSource"]) != source || results.Values.Any(f => f.Source != source))
             throw new InvalidOperationException("Nguồn dữ liệu đã thay đổi. Vui lòng lọc lại.");
         ids = WebMatchImport.SelectedIds(input);
         if (ids.Count == 0 || ids.Count > 100 || ids.Any(id => !results.ContainsKey(id))) throw new InvalidOperationException("Chọn từ 1 đến 100 trận trong danh sách.");
@@ -247,11 +293,12 @@
         if (source != "api-football") throw new InvalidOperationException("Xem trước này dành cho API-Football.");
         List<string> ids;
         var results = SelectedFixtures(input, out ids);
-        Session.Remove("WebMatchPreviewToken");
+        importState.Values.Remove("WebMatchPreviewToken");
         LoadSelectedMarkets(results, ids);
+        importState.Values["WebMatchExpires"] = DateTime.UtcNow.AddMinutes(15);
         string token = Guid.NewGuid().ToString("N");
-        Session["WebMatchPreviewToken"] = token;
-        Session["WebMatchPreviewIds"] = ids.OrderBy(id => id, StringComparer.Ordinal).ToArray();
+        importState.Values["WebMatchPreviewToken"] = token;
+        importState.Values["WebMatchPreviewIds"] = ids.OrderBy(id => id, StringComparer.Ordinal).ToArray();
         Reply(new { ok = true, previewToken = token, matches = ids.Select(id => {
             var f = results[id];
             return new { f.Id, f.Home, f.Away, f.Time, Markets = f.Markets.Where(m => m.Code != "71").Concat(new[] {
@@ -265,8 +312,8 @@
         var results = SelectedFixtures(input, out ids);
         if (source == "api-football")
         {
-            var previewIds = Session["WebMatchPreviewIds"] as string[];
-            if (Session["WebMatchPreviewToken"] == null || WebMatchImport.Str(input, "previewToken") != Convert.ToString(Session["WebMatchPreviewToken"]) ||
+            var previewIds = importState.Values["WebMatchPreviewIds"] as string[];
+            if (importState.Values["WebMatchPreviewToken"] == null || WebMatchImport.Str(input, "previewToken") != Convert.ToString(importState.Values["WebMatchPreviewToken"]) ||
                 previewIds == null || !previewIds.SequenceEqual(ids.OrderBy(id => id, StringComparer.Ordinal)) || ids.Any(id => results[id].Markets.Count == 0))
                 throw new InvalidOperationException("Vui lòng xem trước kèo cho đúng các trận đã chọn trước khi tạo.");
         }
@@ -323,11 +370,11 @@
                         cmd.Parameters.AddWithValue("@home", home); cmd.Parameters.AddWithValue("@away", away); cmd.ExecuteNonQuery();
                     }
                     using (var cmd = new SqlCommand("UPDATE bet_match_total SET user_host=@user WHERE match=@id", conn, tx))
-                    { cmd.Parameters.AddWithValue("@user", Session["UserID"]); cmd.Parameters.AddWithValue("@id", MatchId(f)); cmd.ExecuteNonQuery(); }
+                    { cmd.Parameters.AddWithValue("@user", currentUserId); cmd.Parameters.AddWithValue("@id", MatchId(f)); cmd.ExecuteNonQuery(); }
                 }
                 tx.Commit();
             }
         }
-        Session.Remove("WebMatchResults"); Session.Remove("WebMatchPreviewToken"); Session.Remove("WebMatchPreviewIds"); Reply(new { ok = true, count = ids.Count });
+        importState.Values.Remove("WebMatchResults"); importState.Values.Remove("WebMatchPreviewToken"); importState.Values.Remove("WebMatchPreviewIds"); Reply(new { ok = true, count = ids.Count });
     }
 </script>

@@ -21,6 +21,8 @@ public static class AuthSession
         HttpContext context = HttpContext.Current;
         if (context == null || context.Session == null) return false;
         if (context.Session["UserName"] != null) return true;
+        // Read-only API requests resolve their authenticated user without mutating login session data.
+        if (context.Session.IsReadOnly) return false;
 
         HttpCookie cookie = context.Request.Cookies[FormsAuthentication.FormsCookieName];
         if (cookie == null || string.IsNullOrEmpty(cookie.Value)) return false;

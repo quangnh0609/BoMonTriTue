@@ -8,7 +8,7 @@ class Element {
     constructor(id = '') {
         this.id = id; this.value = ''; this.children = []; this.dataset = {};
         this.classes = new Set(['hidden']);
-        this.classList = { contains: x => this.classes.has(x), toggle: (x, yes) => yes ? this.classes.add(x) : this.classes.delete(x) };
+        this.classList = { add: x => this.classes.add(x), remove: x => this.classes.delete(x), contains: x => this.classes.has(x), toggle: (x, yes) => yes ? this.classes.add(x) : this.classes.delete(x) };
     }
     setAttribute() {}
     append(...items) { this.children.push(...items); }
@@ -81,6 +81,12 @@ context.fetch = async (_, request) => {
         assert.equal(firstRows[0].children[1].textContent,'Hiệp 1');
         assert.equal(firstRows[0].children[2].textContent,'Cả trận');
         assert.equal(firstRows[4].children[1].children[1].textContent,'Suy từ FT');
+        assert(firstRows[2].classList.contains('hidden'),'Rate rows hidden by default');
+        const rateButton=firstRows[0].children[0].children[0]; rateButton.onclick();
+        assert(!firstRows[2].classList.contains('hidden'),'Rate button reveals prices');
+        rateButton.onclick(); assert(firstRows[2].classList.contains('hidden'),'Rate button hides prices again');
+        assert.equal(firstRows[4].children[2].children[0].inputMode,'text','Handicap keyboard must allow minus sign');
+        assert.equal(firstRows[1].children[2].children[0].inputMode,'decimal','Totals retain decimal keyboard');
         function edit(rows,row,column,value) { const input=rows[row].children[column].children[0]; input.value=value; input.oninput(); }
         edit(firstRows,4,2,'-0,75'); edit(firstRows,5,2,'0,85'); edit(firstRows,6,2,'0.95');
         edit(firstRows,1,2,'2.5'); edit(firstRows,2,2,'1.1'); edit(firstRows,3,2,'0.8');

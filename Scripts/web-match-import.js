@@ -25,18 +25,76 @@
         if (id) el(id).querySelector('input,button').focus();
         else if (opener) opener.focus();
     }
-    async function api(data, tokenRetried = false) {
-        const response = await fetch('WebMatches.aspx', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ token: window.webMatchToken, source }, data)) });
+    function operationId() {
+        const bytes = new Uint8Array(16);
+        if (window.crypto && window.crypto.getRandomValues) window.crypto.getRandomValues(bytes);
+        else for (let i = 0; i < bytes.length; i++) bytes[i] = Math.floor(Math.random() * 256);
+        return Array.from(bytes, value => value.toString(16).padStart(2, '0')).join('');
+    }
+    function activePage() { return document.hidden !== true && !(typeof navigator !== 'undefined' && navigator.onLine === false); }
+    function waitForActivePage() {
+        if (activePage()) return Promise.resolve();
+        return new Promise(resolve => {
+            const resume = () => {
+                if (!activePage()) return;
+                if (document.removeEventListener) document.removeEventListener('visibilitychange', resume);
+                if (window.removeEventListener) { window.removeEventListener('online', resume); window.removeEventListener('pageshow', resume); }
+                resolve();
+            };
+            document.addEventListener('visibilitychange', resume);
+            if (window.addEventListener) { window.addEventListener('online', resume); window.addEventListener('pageshow', resume); }
+        });
+    }
+    async function requestJson(payload, url = 'WebMatches.aspx') {
+        const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+        let slept = document.hidden === true;
+        const resume = () => { if (document.hidden === true) slept = true; else if (slept && controller) controller.abort(); };
+        document.addEventListener('visibilitychange', resume);
+        try {
+            const options = payload ? { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) } : { credentials: 'same-origin', cache: 'no-store' };
+            if (controller) options.signal = controller.signal;
+            const response = await fetch(url, options);
+            const result = await response.json();
+            if (!result || typeof result !== 'object') throw new Error('Phản hồi không hợp lệ.');
+            return result;
+        } finally { if (document.removeEventListener) document.removeEventListener('visibilitychange', resume); }
+    }
+    async function recoverOperation(payload) {
+        let retriedRead = false;
+        const deadline = Date.now() + 35 * 60 * 1000;
+        for (let attempt = 0; attempt < 12 && Date.now() < deadline; attempt++) {
+            await waitForActivePage();
+            const message = 'Đang khôi phục kết nối và kiểm tra kết quả lượt xử lý…';
+            const notices = payload.action === 'create' ? ['webMatchPreviewMessage', 'webMatchTeamsMessage', 'webMatchResultsMessage'] : [payload.action === 'preview' ? 'webMatchResultsMessage' : 'webMatchFilterMessage'];
+            notices.forEach(id => { el(id).textContent = message; });
+            let result;
+            try { result = await requestJson({ action: 'status', token: window.webMatchToken, source: payload.source, operationId: payload.operationId }); }
+            catch (_) { if (attempt === 11) break; await new Promise(resolve => setTimeout(resolve, 3000)); continue; }
+            if (result.code === 'WEB_MATCH_OPERATION_MISSING') {
+                // A lost create response is ambiguous. Never submit the import again automatically.
+                if (payload.action === 'create') throw new Error('Kết nối bị gián đoạn, chưa xác định được kết quả tạo trận. Kiểm tra danh sách Trận đấu trước khi thử lại. Các ô đã sửa vẫn được giữ.');
+                if (retriedRead) throw new Error(result.message || 'Không thể khôi phục lượt tải. Vui lòng thử lại.');
+                retriedRead = true;
+                try { result = await requestJson(payload); } catch (_) { continue; }
+            }
+            if (!result.operationPending) return result;
+            attempt = -1; // A healthy pending response is not a failed reconnect.
+            await new Promise(resolve => setTimeout(resolve, 5000));
+        }
+        throw new Error('Chưa khôi phục được kết nối. Các ô đã sửa vẫn được giữ; nếu đang tạo trận, hãy kiểm tra danh sách trước khi thử lại.');
+    }
+    async function api(data, tokenRetried = false, requestId = operationId()) {
+        const payload = Object.assign({ token: window.webMatchToken, source, operationId: requestId }, data);
         let result;
-        try { result = await response.json(); } catch (_) { throw new Error('Không nhận được dữ liệu. Vui lòng kiểm tra kết nối hoặc đăng nhập lại.'); }
+        try { result = await requestJson(payload); }
+        catch (_) { result = await recoverOperation(payload); }
+        if (result.operationPending) result = await recoverOperation(payload);
         if (!result.ok && result.code === 'WEB_MATCH_TOKEN_CHANGED' && !tokenRetried) {
-            const refresh = await fetch('WebMatches.aspx?action=token', { credentials: 'same-origin', cache: 'no-store' });
-            let session;
-            try { session = await refresh.json(); } catch (_) { throw new Error('Không nhận được dữ liệu. Vui lòng kiểm tra kết nối hoặc đăng nhập lại.'); }
+            const session = await requestJson(null, 'WebMatches.aspx?action=token');
             if (!session.ok || !session.token) throw new Error(session.message || 'Vui lòng đăng nhập lại.');
             window.webMatchToken = session.token;
             // Retry only an explicitly rejected token, never a timeout or an ambiguous create response.
-            return api(data, true);
+            return api(data, true, requestId);
         }
         const quota = result.quota;
         const quotaLabel = result.quotaUnit || (source === 'api-football' ? 'Lượt gọi hôm nay' : 'Credits còn lại');
@@ -192,8 +250,9 @@
             table.appendChild(head);
             const rateRows = [];
             const rateButton = document.createElement('button'); rateButton.type = 'button'; rateButton.textContent = 'Rate'; rateButton.className = 'ml-2 rounded bg-red-500 text-white px-2 py-1';
-            let showRates = true;
-            rateButton.onclick = () => { if (busy) return; showRates = !showRates; rateRows.forEach(row => row.classList.toggle('hidden', !showRates)); };
+            let showRates = false;
+            rateButton.setAttribute('aria-expanded', 'false');
+            rateButton.onclick = () => { if (busy) return; showRates = !showRates; rateButton.setAttribute('aria-expanded', String(showRates)); rateRows.forEach(row => row.classList.toggle('hidden', !showRates)); };
             head.children[0].appendChild(rateButton);
             function market(type, period) {
                 const code = type + period;
@@ -204,13 +263,13 @@
                 return draft[code];
             }
             function row(type, property, label, rate = false) {
-                const tr = document.createElement('tr'); if (rate) rateRows.push(tr);
+                const tr = document.createElement('tr'); if (rate) { rateRows.push(tr); tr.classList.add('hidden'); }
                 const labelCell = document.createElement('td'); labelCell.className = 'p-2 border text-right ' + (rate ? 'text-red-500' : 'bg-gray-50 font-bold'); labelCell.textContent = label; tr.appendChild(labelCell);
                 ['1', '3'].forEach(period => {
                     const td = document.createElement('td'); td.className = 'p-1 border ' + (period === '3' ? 'bg-blue-50/30 text-blue-700' : '');
                     if (type === '7' && period === '3') { td.textContent = '—'; tr.appendChild(td); return; }
                     const item = market(type, period), original = originals[item.Code];
-                    const input = document.createElement('input'); input.type = 'text'; input.inputMode = 'decimal'; input.autocomplete = 'off'; input.maxLength = 24;
+                    const input = document.createElement('input'); input.type = 'text'; input.inputMode = property === 'Line' && ['1', '3', '6', '7'].includes(type) ? 'text' : 'decimal'; input.autocomplete = 'off'; input.maxLength = 24;
                     input.className = 'w-full min-w-0 p-2 text-right bg-transparent outline-none focus:bg-white focus:ring-1 focus:ring-blue-400'; input.value = item[property];
                     input.dataset.fixture = m.Id; input.dataset.code = item.Code; input.dataset.field = property;
                     input.setAttribute('aria-label', m.Home + ' – ' + m.Away + ': ' + label + ' ' + (period === '1' ? 'H1' : 'FT'));
