@@ -3,6 +3,8 @@ GO
 CREATE TABLE [dbo].[bet_season](
 	[season] [char](16) NOT NULL,
 	[season_name] [nvarchar](128) NOT NULL,
+	[the_odds_api_name] [nvarchar](128) NULL,
+	[api_football_name] [nvarchar](128) NULL,
 	[is_active] [bit] NOT NULL CONSTRAINT [DF_bet_season_is_active] DEFAULT (1),
  CONSTRAINT [PK_bet_season] PRIMARY KEY CLUSTERED 
 (

@@ -167,6 +167,10 @@ public static class ApiFootballImport
     }
     public static List<WebMatchImport.Market> SelectMarkets(IEnumerable<Dictionary<string, object>> bookmakers, string home, string away)
     {
+        return WebMatchImport.SelectMarkets(ConvertBooks(bookmakers, home, away), home, away);
+    }
+    private static List<Dictionary<string, object>> ConvertBooks(IEnumerable<Dictionary<string, object>> bookmakers, string home, string away)
+    {
         var converted = new List<Dictionary<string, object>>();
         foreach (var book in bookmakers)
         {
@@ -189,7 +193,9 @@ public static class ApiFootballImport
                         string side = text.Substring(0, space);
                         bool total = key.Contains("totals");
                         name = total ? (side == "Over" || side == "Under" ? side : null) : side == "Home" ? home : side == "Away" ? away : null;
-                        outcome["point"] = line;
+                        // API-Football quotes both sides against the HOME handicap (same sign).
+                        // The shared adapter expects a handicap applied to each side individually.
+                        outcome["point"] = !total && side == "Away" ? -line : line;
                     }
                     if (name == null) continue;
                     outcome["name"] = name; outcomes.Add(outcome);
@@ -198,7 +204,7 @@ public static class ApiFootballImport
             }
             converted.Add(new Dictionary<string, object> { { "key", WebMatchImport.Str(book, "id") }, { "title", WebMatchImport.Str(book, "name") }, { "markets", markets } });
         }
-        return WebMatchImport.SelectMarkets(converted, home, away);
+        return converted;
     }
     private static string MarketKey(string name)
     {
@@ -207,17 +213,20 @@ public static class ApiFootballImport
         {
             case "Match Winner": return "h2h";
             case "First Half Winner": return "h2h_h1";
-            case "Second Half Winner": return "h2h_h2";
+
             case "Asian Handicap": return "spreads";
             case "Asian Handicap First Half": return "spreads_h1";
-            case "Asian Handicap Second Half": return "spreads_h2";
+
+
             case "Goals Over/Under": return "totals";
             case "Goals Over/Under First Half": return "totals_h1";
-            case "Goals Over/Under Second Half": return "totals_h2";
+
+
             case "Corners Over Under": return "alternate_totals_corners";
             case "Corners Over Under First Half": return "alternate_totals_corners_h1";
-            case "Corners Over Under Second Half": return "alternate_totals_corners_h2";
+
             case "Corners Asian Handicap": return "alternate_spreads_corners";
+            case "Cards Asian Handicap": return "alternate_spreads_cards";
             case "Cards Over/Under": return "alternate_totals_cards";
             default: return null;
         }

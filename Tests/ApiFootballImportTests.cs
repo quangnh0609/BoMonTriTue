@@ -32,7 +32,7 @@ public static class ApiFootballImportTests
         string oddsJson = @"[
           {'id':1,'name':'Book A','bets':[
             {'name':'Match Winner','values':[{'value':'Home','odd':'2.25'},{'value':'Draw','odd':'3.45'},{'value':'Away','odd':'3.15'}]},
-            {'name':'Asian Handicap','values':[{'value':'Home -0.5','odd':'1.90'},{'value':'Away +0.5','odd':'1.92'},{'value':'Home -1','odd':'1.8'},{'value':'Away +1','odd':'2.1'}]},
+            {'name':'Asian Handicap','values':[{'value':'Home -0.5','odd':'1.90'},{'value':'Away -0.5','odd':'1.92'},{'value':'Home -1','odd':'1.8'},{'value':'Away -1','odd':'2.1'}]},
             {'name':'Goals Over/Under','values':[{'value':'Over 2.5','odd':'1.9'},{'value':'Under 2.5','odd':'1.92'},{'value':'Over 3','odd':'1.6'},{'value':'Under 3','odd':'2.4'}]},
             {'name':'Goals Over/Under First Half','values':[{'value':'Over 1','odd':'1.8'},{'value':'Under 1','odd':'2.1'}]},
             {'name':'Corners Over Under','values':[{'value':'Over 9.5','odd':'1.9'},{'value':'Under 9.5','odd':'1.9'}]},
@@ -44,7 +44,7 @@ public static class ApiFootballImportTests
         var markets = ApiFootballImport.SelectMarkets(WebMatchImport.Rows(Json(oddsJson)), "Home FC", "Away FC");
         Check(markets.Count == 6, "Only supported markets");
         Check(markets.Single(m => m.Code == "43").Home == 2.3m && markets.Single(m => m.Code == "43").Draw == 3.5m, "1X2 rounding");
-        Check(markets.Single(m => m.Code == "33").Line == -.5m, "Pair opposite handicap signs");
+        Check(markets.Single(m => m.Code == "33").Line == -.5m, "Convert shared home handicap to opposite per-side signs");
         Check(markets.Single(m => m.Code == "23").Line == 2.5m, "Closest price total line");
         Check(markets.Single(m => m.Code == "21").Line == 1m, "Explicit first half");
         WebMatchImport.ApplyFirstHalfRules(markets);
@@ -53,8 +53,26 @@ public static class ApiFootballImportTests
         Check(markets.Where(m => m.Line.HasValue).All(m => m.Home == .9m && m.Away == .9m), "Existing payout rules reused");
         string splitBooks = @"[{'id':1,'name':'A','bets':[{'name':'Goals Over/Under','values':[{'value':'Over 2.5','odd':'1.9'}]}]},{'id':2,'name':'B','bets':[{'name':'Goals Over/Under','values':[{'value':'Under 2.5','odd':'1.9'}]}]}]";
         Check(ApiFootballImport.SelectMarkets(WebMatchImport.Rows(Json(splitBooks)), "H", "A").Count == 0, "Never combine bookmakers");
-        string wrongLines = @"[{'id':1,'name':'A','bets':[{'name':'Asian Handicap','values':[{'value':'Home -0.5','odd':'1.9'},{'value':'Away -0.5','odd':'1.9'}]},{'name':'Goals Over/Under','values':[{'value':'Over 2.5','odd':'1.9'},{'value':'Under 3','odd':'1.9'}]}]}]";
+        string wrongLines = @"[{'id':1,'name':'A','bets':[{'name':'Asian Handicap','values':[{'value':'Home -0.5','odd':'1.9'},{'value':'Away +0.5','odd':'1.9'}]},{'name':'Goals Over/Under','values':[{'value':'Over 2.5','odd':'1.9'},{'value':'Under 3','odd':'1.9'}]}]}]";
         Check(ApiFootballImport.SelectMarkets(WebMatchImport.Rows(Json(wrongLines)), "H", "A").Count == 0, "Reject mismatched lines");
+        // Same-sign layout observed from /odds?date=2026-11-14; prices chosen to expose cross-line pairing.
+        string actualHandicaps = @"[{'id':1,'name':'A','bets':[
+          {'name':'Asian Handicap','values':[{'value':'Home -0.5','odd':'6.60'},{'value':'Away -0.5','odd':'1.11'},{'value':'Home +0.5','odd':'1.91'},{'value':'Away +0.5','odd':'1.93'}]},
+          {'name':'Corners Asian Handicap','values':[{'value':'Home +2','odd':'1.80'},{'value':'Away +2','odd':'2.00'},{'value':'Home +1.5','odd':'2.00'},{'value':'Away +1.5','odd':'1.80'}]},
+          {'name':'Cards Asian Handicap','values':[{'value':'Home -0.5','odd':'1.98'},{'value':'Away -0.5','odd':'1.75'}]},
+          {'name':'Asian Handicap (2nd Half)','values':[{'value':'Home +0.75','odd':'1.75'},{'value':'Away +0.75','odd':'1.94'}]},
+          {'name':'Goals Over/Under - Second Half','values':[{'value':'Over 1.5','odd':'1.85'},{'value':'Under 1.5','odd':'1.85'}]}
+        ]}]";
+        var actualMarkets = ApiFootballImport.SelectMarkets(WebMatchImport.Rows(Json(actualHandicaps)), "H", "A");
+        Check(actualMarkets.Single(m => m.Code == "33").Line == .5m, "Choose balanced shared line, not opposite raw signs");
+        Check(actualMarkets.Single(m => m.Code == "13").Line == 2m, "Read same-sign corner pair");
+        Check(actualMarkets.Single(m => m.Code == "63").Line == -.5m, "Read same-sign card pair");
+        Check(!actualMarkets.Any(m => m.Code.EndsWith("2")), "Never import H2 markets");
+        string kosovoQuotes = @"[{'id':8,'name':'Bet365','bets':[{'name':'Asian Handicap','values':[
+          {'value':'Home -0.75','odd':'2.05'},{'value':'Away -0.75','odd':'1.75'},
+          {'value':'Home -0.5','odd':'1.80'},{'value':'Away -0.5','odd':'1.95'}]}]}]";
+        var kosovoBooks = WebMatchImport.Rows(Json(kosovoQuotes)).ToList();
+        Check(ApiFootballImport.SelectMarkets(kosovoBooks, "Kosovo", "Israel").Single().Line == -.5m, "Kosovo -0.5 is currently the balanced-price suggestion among available lines");
         Check(ApiFootballImport.ValidateResponse(Json("{'errors':[],'response':[]}")) != null, "Empty success");
         foreach (string errorJson in new[] { "{'errors':{'plan':'restricted'},'response':[]}", "{'errors':['quota'],'response':[]}", "{'errors':[]}" })
         {

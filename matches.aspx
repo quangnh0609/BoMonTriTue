@@ -16,8 +16,10 @@
             return;
         }
 
+        Response.Cache.SetCacheability(HttpCacheability.NoCache);
+        Response.Cache.SetNoStore();
+        if (Session["WebMatchToken"] == null) Session["WebMatchToken"] = Guid.NewGuid().ToString("N");
         if (!IsPostBack) { 
-            if (Session["WebMatchToken"] == null) Session["WebMatchToken"] = Guid.NewGuid().ToString("N");
             BindMatchTable();
 
         }
@@ -509,14 +511,18 @@
 		try {
 			string connStr = ConfigurationManager.ConnectionStrings["MyDbConn"].ConnectionString;
 			using (SqlConnection conn = new SqlConnection(connStr)) {
+                conn.Open();
+                string apiColumns;
+                using (var schema = new SqlCommand("SELECT CASE WHEN COL_LENGTH('dbo.bet_team','the_odds_api_name') IS NOT NULL AND COL_LENGTH('dbo.bet_team','api_football_name') IS NOT NULL AND COL_LENGTH('dbo.bet_season','the_odds_api_name') IS NOT NULL AND COL_LENGTH('dbo.bet_season','api_football_name') IS NOT NULL THEN 1 ELSE 0 END", conn))
+                    apiColumns = Convert.ToInt32(schema.ExecuteScalar()) == 1 ? ", the_odds_api_name, api_football_name" : ", CAST(NULL AS nvarchar(128)) AS the_odds_api_name, CAST(NULL AS nvarchar(128)) AS api_football_name";
 				// 1. Lấy dữ liệu Season
-				string sqlSeason = "SELECT rtrim(ltrim(season)) as season, season_name, is_active FROM bet_season";
+				string sqlSeason = "SELECT rtrim(ltrim(season)) as season, season_name, is_active" + apiColumns + " FROM bet_season";
 				SqlDataAdapter daSeason = new SqlDataAdapter(sqlSeason, conn);
 				DataTable dtSeason = new DataTable();
 				daSeason.Fill(dtSeason);
 
 				// 2. Lấy dữ liệu Team
-				string sqlTeam = "SELECT rtrim(ltrim(team)) as team, team_name, is_active FROM bet_team";
+				string sqlTeam = "SELECT rtrim(ltrim(team)) as team, team_name, is_active" + apiColumns + " FROM bet_team";
 				SqlDataAdapter daTeam = new SqlDataAdapter(sqlTeam, conn);
 				DataTable dtTeam = new DataTable();
 				daTeam.Fill(dtTeam);
@@ -527,20 +533,20 @@
 				var listS = new List<Dictionary<string, object>>();
 				foreach (DataRow r in dtSeason.Rows) {
 					listS.Add(new Dictionary<string, object> { 
-						{ "season", r["season"] }, { "season_name", r["season_name"] }, { "is_active", r["is_active"] } 
+						{ "season", r["season"] }, { "season_name", r["season_name"] }, { "is_active", r["is_active"] }, { "the_odds_api_name", r["the_odds_api_name"] }, { "api_football_name", r["api_football_name"] }
 					});
 				}
 
 				var listT = new List<Dictionary<string, object>>();
 				foreach (DataRow r in dtTeam.Rows) {
 					listT.Add(new Dictionary<string, object> { 
-						{ "team", r["team"] }, { "team_name", r["team_name"] }, { "is_active", r["is_active"] } 
+						{ "team", r["team"] }, { "team_name", r["team_name"] }, { "is_active", r["is_active"] }, { "the_odds_api_name", r["the_odds_api_name"] }, { "api_football_name", r["api_football_name"] }
 					});
 				}
 
 				// 4. Đẩy chuỗi script ra Client
-				string jsonS = serializer.Serialize(listS);
-				string jsonT = serializer.Serialize(listT);
+				string jsonS = serializer.Serialize(listS).Replace("<", "\\u003c").Replace(">", "\\u003e");
+				string jsonT = serializer.Serialize(listT).Replace("<", "\\u003c").Replace(">", "\\u003e");
 				string script = "var dataSeason = " + jsonS + "; var dataTeam = " + jsonT + ";";
 				
 				script += "var dataSeasonAll = dataSeason; var dataTeamAll = dataTeam; dataSeason = dataSeasonAll.filter(function(x){return x.is_active;}); dataTeam = dataTeamAll.filter(function(x){return x.is_active;});";

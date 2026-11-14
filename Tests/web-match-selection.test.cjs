@@ -17,7 +17,7 @@ class Element {
     focus() {}
     get options() { return this.children; }
     querySelector() { return new Element(); }
-    querySelectorAll(selector) { return this.id === 'webMatchList' && selector.startsWith('input') ? [{ value: 'fixture-one', checked: true }] : []; }
+    querySelectorAll(selector) { return this.id === 'webMatchList' && selector.startsWith('input') ? (process.env.WEB_MATCH_TEST_SOURCE === 'api-football' ? ['fixture-one','fixture-two'] : ['fixture-one']).map(value => ({value,checked:true})) : []; }
 }
 const elements = new Map();
 const el = id => { if (!elements.has(id)) elements.set(id, new Element(id)); return elements.get(id); };
@@ -40,11 +40,21 @@ vm.createContext(context);
 vm.runInContext(fs.readFileSync(path.join(__dirname, '../Scripts/web-match-import.js'), 'utf8'), context);
 
 
+const selectedIds = process.env.WEB_MATCH_TEST_SOURCE === 'api-football' ? ['fixture-one', 'fixture-two'] : ['fixture-one'];
 context.fetch = async (_, request) => {
     const data = JSON.parse(request.body); requests.push(data);
-    return { json: async () => data.action === 'leagues' ? { ok: true, leagues: [] } : data.action === 'search' ? {
-        ok: true, snapshot: 'selection', matches: [{Id:'fixture-one',Time:'20:00 31/12/2026',Home:'Home',Away:'Away'}]
-    } : {ok:true,count:1} };
+    return { json: async () => {
+        if (data.action === 'leagues') return {ok:true,leagues:[]};
+        if (data.action === 'search') return {ok:true,snapshot:'selection',matches:selectedIds.map((id,i) => ({Id:id,Time:'20:00 31/12/2026',Home:'Home'+i,Away:'Away'+i}))};
+        if (data.action === 'preview') return {ok:true,previewToken:'preview-one',matches:selectedIds.map((id,i)=>({Id:id,Time:'20:00 31/12/2026',Home:'Home'+i,Away:'Away'+i,Markets:[
+            {Code:'33',Line:0.5,Home:0.9,Away:0.9,Bookmaker:'Book A'},
+            {Code:'31',Line:0,Home:0.9,Away:0.9,Bookmaker:'Suy từ FT',Estimated:true},
+            {Code:'43',Line:null,Home:2.3,Draw:3.5,Away:3.2,Bookmaker:'Book A'},
+            {Code:'32',Line:99,Home:0.9,Away:0.9,Bookmaker:'Must not appear'},
+            {Code:'71',Line:0,Home:1,Away:1,Bookmaker:'Mặc định hệ thống'}
+        ]}))};
+        return {ok:true,count:selectedIds.length};
+    }};
 };
 (async () => {
     await context.window.webMatchOpen();
@@ -59,18 +69,49 @@ context.fetch = async (_, request) => {
     assert.equal(requests.length,2,'Search must not request odds/create');
     assert(el('webMatchList').children[0].children[0].children[1].textContent.includes('31/12/2026'),'Show date as well as time');
     await el('webMatchCreate').onclick();
-    assert.equal(requests[2].action,'create');
-    assert.deepEqual(requests[2].ids,['fixture-one']);
-    assert.equal(requests[2].snapshot,'selection');
+    let createIndex = 2;
+    if (process.env.WEB_MATCH_TEST_SOURCE === 'api-football') {
+        assert.equal(requests[2].action,'preview');
+        assert.equal(reloads,0,'Preview must not create matches');
+        assert.equal(el('webMatchPreview').classList.contains('hidden'),false);
+        assert.equal(el('webMatchPreviewList').children.length,2,'One editable card per selected fixture');
+        const firstRows=el('webMatchPreviewList').children[0].children[1].children;
+        const secondRows=el('webMatchPreviewList').children[1].children[1].children;
+        assert.equal(firstRows[0].children.length,3,'Only label, H1 and FT columns');
+        assert.equal(firstRows[0].children[1].textContent,'Hiệp 1');
+        assert.equal(firstRows[0].children[2].textContent,'Cả trận');
+        assert.equal(firstRows[4].children[1].children[1].textContent,'Suy từ FT');
+        function edit(rows,row,column,value) { const input=rows[row].children[column].children[0]; input.value=value; input.oninput(); }
+        edit(firstRows,4,2,'-0,75'); edit(firstRows,5,2,'0,85'); edit(firstRows,6,2,'0.95');
+        edit(firstRows,1,2,'2.5'); edit(firstRows,2,2,'1.1'); edit(firstRows,3,2,'0.8');
+        edit(secondRows,4,2,'-1.25');
+        edit(secondRows,1,2,'3.5');
+        await el('webMatchPreviewCreate').onclick();
+        createIndex = 3;
+        assert.equal(requests[createIndex].previewToken,'preview-one');
+        const edits=requests[createIndex].edits;
+        assert.deepEqual(Object.keys(edits).sort(),['fixture-one','fixture-two']);
+        assert.equal(edits['fixture-one'].find(k=>k.Code==='33').Line,'-0,75');
+        assert.equal(edits['fixture-one'].find(k=>k.Code==='33').Home,'0,85');
+        assert.equal(edits['fixture-one'].find(k=>k.Code==='23').Home,'1.1');
+        assert.equal(edits['fixture-two'].find(k=>k.Code==='33').Line,'-1.25');
+        assert.equal(edits['fixture-two'].find(k=>k.Code==='23').Line,'3.5');
+        assert(Object.values(edits).every(markets=>markets.every(k=>!k.Code.endsWith('2'))),'Never send H2 edits');
+        assert(Object.values(edits).every(markets=>markets.some(k=>k.Code==='71')),'Include editable kickoff H1');
+    }
+    assert.equal(requests[createIndex].action,'create');
+    assert.deepEqual(requests[createIndex].ids,selectedIds);
+    assert.equal(requests[createIndex].snapshot,'selection');
     assert(requests.every(r => r.source === (process.env.WEB_MATCH_TEST_SOURCE || 'the-odds-api')), 'Keep chosen source on every request');
+    const requestCount = requests.length;
     el('webMatchBack').onclick();
     el('webMatchDays').children[0].onclick();
     el('webMatchDays').children[2].onclick();
     await el('webMatchSearch').onclick();
-    assert.equal(requests.length,3,'Empty day selection must not send a request');
+    assert.equal(requests.length,requestCount,'Empty day selection must not send a request');
     el('webMatchChangeSource').onclick();
     await el('webMatchSourceFootball').onclick();
-    assert.equal(requests[3].source, 'api-football');
+    assert.equal(requests[requestCount].source, 'api-football');
     assert.equal(el('webMatchList').children.length,0,'Switching source clears old selection');
     console.log('Multiple day selection and list-first flow checks passed.');
 })().catch(error => {console.error(error);process.exitCode=1;});

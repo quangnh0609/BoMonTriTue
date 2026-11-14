@@ -12,12 +12,14 @@ function functionSource(name) {
 const elements = {};
 const context = {
     dataSeason: [{season:'EURO',season_name:'Vô địch châu Âu'}, {season:'EURO_Q',season_name:'Vô địch châu Âu vòng loại'}],
-    dataTeam: [{team:'DN',team_name:'Đà Nẵng'}, {team:'DNA',team_name:'Đà Nẵng trẻ'}],
+    dataTeam: [{team:'DN',team_name:'Đà Nẵng',the_odds_api_name:'Danang Odds',api_football_name:'Da Nang FC'}, {team:'DNA',team_name:'Đà Nẵng trẻ'}],
     document: { getElementById: id => elements[id] },
     setTimeout: callback => callback()
 };
 vm.createContext(context);
 vm.runInContext(['removeAccents','resolveMatchSelection','isValidSelection','matchSelectionMessage','validateSelection','selectItem'].map(functionSource).join('\n'), context);
+assert.equal(context.resolveMatchSelection('Danang Odds','listHome').team,'DN');
+assert.equal(context.resolveMatchSelection('Da Nang FC','listWay').team,'DN');
 assert.equal(context.resolveMatchSelection('da nang','listHome').team,'DN');
 assert.equal(context.resolveMatchSelection('  vo dich   chau au ','listSeason').season,'EURO');
 assert.equal(context.resolveMatchSelection('EURO','listSeason').season,'EURO');

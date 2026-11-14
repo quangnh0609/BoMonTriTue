@@ -772,7 +772,7 @@
                 var normalizedName = removeAccents(nameVal).toLowerCase();
                 var normalizedCode = removeAccents(codeVal).toLowerCase();
 
-                if (forceAll || value === "" || normalizedName.includes(value) || normalizedCode.includes(value)) {
+                if (forceAll || value === "" || normalizedName.includes(value) || normalizedCode.includes(value) || removeAccents(item.the_odds_api_name).includes(value) || removeAccents(item.api_football_name).includes(value)) {
                     var div = document.createElement('div');
                     div.className = 'px-3 py-2 hover:bg-blue-100 cursor-pointer border-b text-[12px]';
                     div.textContent = nameVal;
@@ -815,9 +815,9 @@
         const nameKey = listId === 'listSeason' ? 'season_name' : 'team_name';
         const exactCode = data.find(item => removeAccents(item[codeKey]) === term);
         if (exactCode) return exactCode;
-        const exactNames = data.filter(item => removeAccents(item[nameKey]) === term);
+        const exactNames = data.filter(item => [item[nameKey], item.the_odds_api_name, item.api_football_name].some(name => removeAccents(name) === term));
         if (exactNames.length === 1) return exactNames[0];
-        const matches = data.filter(item => removeAccents(item[codeKey]).includes(term) || removeAccents(item[nameKey]).includes(term));
+        const matches = data.filter(item => removeAccents(item[codeKey]).includes(term) || [item[nameKey], item.the_odds_api_name, item.api_football_name].some(name => removeAccents(name).includes(term)));
         return matches.length === 1 ? matches[0] : null;
     }
 

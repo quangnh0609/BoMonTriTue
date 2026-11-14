@@ -30,7 +30,7 @@ const context = {
     fetch: async (_, request) => {
         const data = JSON.parse(request.body); requests.push(data);
         return { json: async () => data.teamChoices.sourceTeam ? { ok: true, count: 1 } : {
-            ok: true, needsTeams: true, requiredTeams: [{ key: 'sourceTeam', name: 'External Team', kind, candidates: [{ id: 'EXISTING', name: 'Existing Team' }], allOptions: [{ id: 'EXISTING', name: 'Existing Team' }, { id: 'DANANG', name: 'Đà Nẵng' }] }]
+            ok: true, needsTeams: true, requiredTeams: [{ key: 'sourceTeam', name: 'External Team', kind, candidates: [{ id: 'EXISTING', name: 'Existing Team' }], allOptions: [{ id: 'EXISTING', name: 'Existing Team' }, { id: 'DANANG', name: 'Đà Nẵng', apiFootballName:'Danang API', theOddsApiName:'Danang Odds' }] }]
         } };
     }
 };
@@ -47,6 +47,10 @@ vm.runInContext(fs.readFileSync(path.join(__dirname, '../Scripts/web-match-impor
     let select = el('webMatchTeamList').children[0].children[2];
     const search = el('webMatchTeamList').children[0].children[1];
     assert.equal(select.options.length, 3, 'Start with LIKE candidates only');
+    search.value = 'Danang API'; search.oninput();
+    assert.equal(select.options[2].value, 'DANANG', 'Search API alias across all options even when initial candidates exist');
+    search.value = 'Danang Odds'; search.oninput();
+    assert.equal(select.options[2].value, 'DANANG', 'Search other provider alias');
     el('webMatchTeamList').children[0].children[4].onclick();
     search.value = 'da nang'; search.oninput();
     assert.equal(select.options.length, 3);
