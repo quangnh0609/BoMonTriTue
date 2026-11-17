@@ -820,3 +820,5 @@
 </script>
 
 <script src="Scripts/bet-line-picker.js?v=20261117"></script>
+
+<script src="Scripts/native-number-inputs.js?v=20261117"></script>

@@ -18,74 +18,55 @@
 
         public string h1_conner_over_under  { get; set; }
         public string ft_conner_over_under  { get; set; }
-        public string h2_conner_over_under  { get; set; }
         public string h1_conner_handicap    { get; set; }
         public string ft_conner_handicap    { get; set; }
-        public string h2_conner_handicap    { get; set; }
 		
         public string h1_goal_over_under    { get; set; }
         public string ft_goal_over_under    { get; set; }
-        public string h2_goal_over_under    { get; set; }
         public string h1_goal_handicap      { get; set; }
         public string ft_goal_handicap      { get; set; }
-        public string h2_goal_handicap      { get; set; }
         
 		public string h1_card_over_under  { get; set; }
         public string ft_card_over_under  { get; set; }
-        public string h2_card_over_under  { get; set; }
         public string h1_card_handicap    { get; set; }
         public string ft_card_handicap    { get; set; }
-        public string h2_card_handicap    { get; set; }
 		
 		public string h1_euro_home          { get; set; }
         public string ft_euro_home          { get; set; }
-        public string h2_euro_home          { get; set; }
         public string h1_euro_draw          { get; set; }
         public string ft_euro_draw          { get; set; }
-        public string h2_euro_draw          { get; set; }
         public string h1_euro_way           { get; set; }
         public string ft_euro_way           { get; set; }
-        public string h2_euro_way           { get; set; }
 		
         public string h1_conner_over_win    { get; set; }
         public string ft_conner_over_win    { get; set; }
-        public string h2_conner_over_win    { get; set; }
         public string h1_conner_under_win   { get; set; }
         public string ft_conner_under_win   { get; set; }
-        public string h2_conner_under_win   { get; set; }
         public string h1_conner_home_win    { get; set; }
         public string ft_conner_home_win    { get; set; }
-        public string h2_conner_home_win    { get; set; }
         public string h1_conner_way_win     { get; set; }
         public string ft_conner_way_win     { get; set; }
-        public string h2_conner_way_win     { get; set; }
 		
         public string h1_goal_over_win      { get; set; }
         public string ft_goal_over_win      { get; set; }
-        public string h2_goal_over_win      { get; set; }
         public string h1_goal_under_win     { get; set; }
         public string ft_goal_under_win     { get; set; }
-        public string h2_goal_under_win     { get; set; }
         public string h1_goal_home_win      { get; set; }
         public string ft_goal_home_win      { get; set; }
-        public string h2_goal_home_win      { get; set; }
         public string h1_goal_way_win       { get; set; }
         public string ft_goal_way_win       { get; set; }
-        public string h2_goal_way_win       { get; set; }
 		
 		public string h1_card_over_win    { get; set; }
         public string ft_card_over_win    { get; set; }
-        public string h2_card_over_win    { get; set; }
         public string h1_card_under_win   { get; set; }
         public string ft_card_under_win   { get; set; }
-        public string h2_card_under_win   { get; set; }
         public string h1_card_home_win    { get; set; }
         public string ft_card_home_win    { get; set; }
-        public string h2_card_home_win    { get; set; }
         public string h1_card_way_win     { get; set; }
         public string ft_card_way_win     { get; set; }
-        public string h2_card_way_win     { get; set; }
     }
+
+    private static string DecimalText(string value) { return (value ?? "").Trim().Replace(',', '.'); }
 
     protected void Page_Load(object sender, EventArgs e)
     {
@@ -104,33 +85,33 @@
 
             // Build XML details — mỗi dòng kèo là 1 <item> với <col>, <h1>, <ft>, <h2>
             XElement details = new XElement("details",
-                new XElement("item", new XElement("col", "conner_over_under"),  new XElement("h1", data.h1_conner_over_under  ?? ""), new XElement("ft", data.ft_conner_over_under  ?? ""), new XElement("h2", data.h2_conner_over_under  ?? "")),
-                new XElement("item", new XElement("col", "conner_handicap"),    new XElement("h1", data.h1_conner_handicap    ?? ""), new XElement("ft", data.ft_conner_handicap    ?? ""), new XElement("h2", data.h2_conner_handicap    ?? "")),
+                new XElement("item", new XElement("col", "conner_over_under"),  new XElement("h1", DecimalText(data.h1_conner_over_under)), new XElement("ft", DecimalText(data.ft_conner_over_under)), new XElement("h2", "")),
+                new XElement("item", new XElement("col", "conner_handicap"),    new XElement("h1", DecimalText(data.h1_conner_handicap)), new XElement("ft", DecimalText(data.ft_conner_handicap)), new XElement("h2", "")),
                 
-				new XElement("item", new XElement("col", "goal_over_under"),    new XElement("h1", data.h1_goal_over_under    ?? ""), new XElement("ft", data.ft_goal_over_under    ?? ""), new XElement("h2", data.h2_goal_over_under    ?? "")),
-                new XElement("item", new XElement("col", "goal_handicap"),      new XElement("h1", data.h1_goal_handicap      ?? ""), new XElement("ft", data.ft_goal_handicap      ?? ""), new XElement("h2", data.h2_goal_handicap      ?? "")),
+				new XElement("item", new XElement("col", "goal_over_under"),    new XElement("h1", DecimalText(data.h1_goal_over_under)), new XElement("ft", DecimalText(data.ft_goal_over_under)), new XElement("h2", "")),
+                new XElement("item", new XElement("col", "goal_handicap"),      new XElement("h1", DecimalText(data.h1_goal_handicap)), new XElement("ft", DecimalText(data.ft_goal_handicap)), new XElement("h2", "")),
                 
-				new XElement("item", new XElement("col", "card_over_under"),  new XElement("h1", data.h1_card_over_under  ?? ""), new XElement("ft", data.ft_card_over_under  ?? ""), new XElement("h2", data.h2_card_over_under  ?? "")),
-                new XElement("item", new XElement("col", "card_handicap"),    new XElement("h1", data.h1_card_handicap    ?? ""), new XElement("ft", data.ft_card_handicap    ?? ""), new XElement("h2", data.h2_card_handicap    ?? "")),
+				new XElement("item", new XElement("col", "card_over_under"),  new XElement("h1", DecimalText(data.h1_card_over_under)), new XElement("ft", DecimalText(data.ft_card_over_under)), new XElement("h2", "")),
+                new XElement("item", new XElement("col", "card_handicap"),    new XElement("h1", DecimalText(data.h1_card_handicap)), new XElement("ft", DecimalText(data.ft_card_handicap)), new XElement("h2", "")),
                 
-				new XElement("item", new XElement("col", "euro_home"),          new XElement("h1", data.h1_euro_home          ?? ""), new XElement("ft", data.ft_euro_home          ?? ""), new XElement("h2", data.h2_euro_home          ?? "")),
-                new XElement("item", new XElement("col", "euro_draw"),          new XElement("h1", data.h1_euro_draw          ?? ""), new XElement("ft", data.ft_euro_draw          ?? ""), new XElement("h2", data.h2_euro_draw          ?? "")),
-                new XElement("item", new XElement("col", "euro_way"),           new XElement("h1", data.h1_euro_way           ?? ""), new XElement("ft", data.ft_euro_way           ?? ""), new XElement("h2", data.h2_euro_way           ?? "")),
+				new XElement("item", new XElement("col", "euro_home"),          new XElement("h1", DecimalText(data.h1_euro_home)), new XElement("ft", DecimalText(data.ft_euro_home)), new XElement("h2", "")),
+                new XElement("item", new XElement("col", "euro_draw"),          new XElement("h1", DecimalText(data.h1_euro_draw)), new XElement("ft", DecimalText(data.ft_euro_draw)), new XElement("h2", "")),
+                new XElement("item", new XElement("col", "euro_way"),           new XElement("h1", DecimalText(data.h1_euro_way)), new XElement("ft", DecimalText(data.ft_euro_way)), new XElement("h2", "")),
                 
-				new XElement("item", new XElement("col", "conner_over_win"),    new XElement("h1", data.h1_conner_over_win    ?? ""), new XElement("ft", data.ft_conner_over_win    ?? ""), new XElement("h2", data.h2_conner_over_win    ?? "")),
-                new XElement("item", new XElement("col", "conner_under_win"),   new XElement("h1", data.h1_conner_under_win   ?? ""), new XElement("ft", data.ft_conner_under_win   ?? ""), new XElement("h2", data.h2_conner_under_win   ?? "")),
-                new XElement("item", new XElement("col", "conner_home_win"),    new XElement("h1", data.h1_conner_home_win    ?? ""), new XElement("ft", data.ft_conner_home_win    ?? ""), new XElement("h2", data.h2_conner_home_win    ?? "")),
-                new XElement("item", new XElement("col", "conner_way_win"),     new XElement("h1", data.h1_conner_way_win     ?? ""), new XElement("ft", data.ft_conner_way_win     ?? ""), new XElement("h2", data.h2_conner_way_win     ?? "")),
+				new XElement("item", new XElement("col", "conner_over_win"),    new XElement("h1", DecimalText(data.h1_conner_over_win)), new XElement("ft", DecimalText(data.ft_conner_over_win)), new XElement("h2", "")),
+                new XElement("item", new XElement("col", "conner_under_win"),   new XElement("h1", DecimalText(data.h1_conner_under_win)), new XElement("ft", DecimalText(data.ft_conner_under_win)), new XElement("h2", "")),
+                new XElement("item", new XElement("col", "conner_home_win"),    new XElement("h1", DecimalText(data.h1_conner_home_win)), new XElement("ft", DecimalText(data.ft_conner_home_win)), new XElement("h2", "")),
+                new XElement("item", new XElement("col", "conner_way_win"),     new XElement("h1", DecimalText(data.h1_conner_way_win)), new XElement("ft", DecimalText(data.ft_conner_way_win)), new XElement("h2", "")),
                 
-				new XElement("item", new XElement("col", "goal_over_win"),      new XElement("h1", data.h1_goal_over_win      ?? ""), new XElement("ft", data.ft_goal_over_win      ?? ""), new XElement("h2", data.h2_goal_over_win      ?? "")),
-                new XElement("item", new XElement("col", "goal_under_win"),     new XElement("h1", data.h1_goal_under_win     ?? ""), new XElement("ft", data.ft_goal_under_win     ?? ""), new XElement("h2", data.h2_goal_under_win     ?? "")),
-                new XElement("item", new XElement("col", "goal_home_win"),      new XElement("h1", data.h1_goal_home_win      ?? ""), new XElement("ft", data.ft_goal_home_win      ?? ""), new XElement("h2", data.h2_goal_home_win      ?? "")),
-                new XElement("item", new XElement("col", "goal_way_win"),       new XElement("h1", data.h1_goal_way_win       ?? ""), new XElement("ft", data.ft_goal_way_win       ?? ""), new XElement("h2", data.h2_goal_way_win       ?? "")),
+				new XElement("item", new XElement("col", "goal_over_win"),      new XElement("h1", DecimalText(data.h1_goal_over_win)), new XElement("ft", DecimalText(data.ft_goal_over_win)), new XElement("h2", "")),
+                new XElement("item", new XElement("col", "goal_under_win"),     new XElement("h1", DecimalText(data.h1_goal_under_win)), new XElement("ft", DecimalText(data.ft_goal_under_win)), new XElement("h2", "")),
+                new XElement("item", new XElement("col", "goal_home_win"),      new XElement("h1", DecimalText(data.h1_goal_home_win)), new XElement("ft", DecimalText(data.ft_goal_home_win)), new XElement("h2", "")),
+                new XElement("item", new XElement("col", "goal_way_win"),       new XElement("h1", DecimalText(data.h1_goal_way_win)), new XElement("ft", DecimalText(data.ft_goal_way_win)), new XElement("h2", "")),
 				
-				new XElement("item", new XElement("col", "card_over_win"),    new XElement("h1", data.h1_card_over_win    ?? ""), new XElement("ft", data.ft_card_over_win    ?? ""), new XElement("h2", data.h2_card_over_win    ?? "")),
-                new XElement("item", new XElement("col", "card_under_win"),   new XElement("h1", data.h1_card_under_win   ?? ""), new XElement("ft", data.ft_card_under_win   ?? ""), new XElement("h2", data.h2_card_under_win   ?? "")),
-                new XElement("item", new XElement("col", "card_home_win"),    new XElement("h1", data.h1_card_home_win    ?? ""), new XElement("ft", data.ft_card_home_win    ?? ""), new XElement("h2", data.h2_card_home_win    ?? "")),
-                new XElement("item", new XElement("col", "card_way_win"),     new XElement("h1", data.h1_card_way_win     ?? ""), new XElement("ft", data.ft_card_way_win     ?? ""), new XElement("h2", data.h2_card_way_win     ?? ""))
+				new XElement("item", new XElement("col", "card_over_win"),    new XElement("h1", DecimalText(data.h1_card_over_win)), new XElement("ft", DecimalText(data.ft_card_over_win)), new XElement("h2", "")),
+                new XElement("item", new XElement("col", "card_under_win"),   new XElement("h1", DecimalText(data.h1_card_under_win)), new XElement("ft", DecimalText(data.ft_card_under_win)), new XElement("h2", "")),
+                new XElement("item", new XElement("col", "card_home_win"),    new XElement("h1", DecimalText(data.h1_card_home_win)), new XElement("ft", DecimalText(data.ft_card_home_win)), new XElement("h2", "")),
+                new XElement("item", new XElement("col", "card_way_win"),     new XElement("h1", DecimalText(data.h1_card_way_win)), new XElement("ft", DecimalText(data.ft_card_way_win)), new XElement("h2", ""))
             );
 
             DateTime? parsedTime = null;

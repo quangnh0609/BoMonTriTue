@@ -4,15 +4,16 @@ const path = require('path');
 const {execFileSync} = require('child_process');
 const assert = require('assert');
 const script = fs.readFileSync(path.join(__dirname, '../Scripts/bet-line-picker.js'), 'utf8');
+const nativeScript = fs.readFileSync(path.join(__dirname, '../Scripts/native-number-inputs.js'), 'utf8');
 const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'bet-line-picker-'));
 const html = `<!doctype html><html><head><meta charset="utf-8"></head><body>
 <input id="line" data-line-picker readonly value="2.5" aria-label="Tài bàn FT" style="margin:30px;width:150px">
-<input id="rate" value="2.3"><pre id="report"></pre>
-<script>${script}</script><script>
+<input id="rate" inputmode="decimal" value="2.3"><pre id="report"></pre>
+<script>${script}</script><script>${nativeScript}</script><script>
 let assertions = 0;
 function check(value, name) { assertions++; if (!value) throw Error(name); }
 function key(field, value) { field.dispatchEvent(new KeyboardEvent('keydown', {key:value,bubbles:true})); }
-window.addEventListener('load', () => setTimeout(() => { try {
+window.addEventListener('load', () => setTimeout(async () => { try {
  const field = document.getElementById('line');
  let events = []; field.addEventListener('input', () => events.push('input')); field.addEventListener('change', () => events.push('change'));
  field.focus();
@@ -39,6 +40,15 @@ window.addEventListener('load', () => setTimeout(() => { try {
  field.click(); list = document.querySelector('[role=listbox]'); centered('0'); key(field,'Escape'); check(!document.querySelector('[role=listbox]'), 'Escape closes');
  field.click(); document.getElementById('rate').focus(); check(!document.querySelector('[role=listbox]'), 'Moving to numeric rate closes');
  check(!document.getElementById('rate').readOnly, 'Numeric rates remain editable');
+ const rate = document.getElementById('rate');
+ check(rate.selectionStart === 0 && rate.selectionEnd === rate.value.length, 'Focus selects entire numeric rate');
+ rate.setSelectionRange(1,1); rate.click();
+ check(rate.selectionStart === 0 && rate.selectionEnd === rate.value.length, 'Click reselects whole value');
+ await new Promise(resolve => setTimeout(resolve, 10));
+ check(rate.selectionEnd === rate.value.length, 'Selection survives tap caret handling');
+ rate.setRangeText('1,85'); check(rate.value === '1,85', 'Can immediately replace whole value with comma decimal');
+ const newRate = document.createElement('input'); newRate.inputMode = 'decimal'; newRate.value = '3.25'; document.body.appendChild(newRate); newRate.focus();
+ check(newRate.selectionStart === 0 && newRate.selectionEnd === 4, 'Dynamic preview numeric inputs select all');
  const dynamic = document.createElement('input'); dynamic.setAttribute('data-line-picker',''); dynamic.value='-0.75'; document.body.appendChild(dynamic); dynamic.focus();
  list = document.querySelector('[role=listbox]'); centered('-0.75'); check(dynamic.readOnly && dynamic.inputMode === 'none','Dynamic fields supported');
  key(dynamic,'Tab'); check(!document.querySelector('[role=listbox]'), 'Tab closes');
@@ -56,8 +66,9 @@ const report = output.match(/<pre id="report">([\s\S]*?)<\/pre>/)?.[1];
 assert(report && report.startsWith('PASS'), report || 'No browser test report');
 console.log(report);
 const manual = fs.readFileSync(path.join(__dirname,'../ucAddMatch.ascx'),'utf8');
-assert.equal((manual.match(/data-line-picker="true"/g)||[]).length,18,'All football H1/FT/H2 total and handicap lines');
+assert.equal((manual.match(/data-line-picker="true"/g)||[]).length,12,'All football H1/FT total and handicap lines');
+assert(!manual.includes('ID="h2_') && !manual.includes('Hiệp 2'), 'No H2 creation fields');
 const esport = fs.readFileSync(path.join(__dirname,'../ucAddEsport.ascx'),'utf8');
-assert.equal((esport.match(/data-line-picker="true"/g)||[]).length,27,'All esports game and series lines');
+assert.equal((esport.match(/data-line-picker="true"/g)||[]).length,17,'Kill, minute and series lines use dropdowns; dragons use numbers');
 for (const file of ['ucAddMatch.ascx','ucAddEsport.ascx','ucAddChampion.ascx']) assert(fs.readFileSync(path.join(__dirname,'..',file),'utf8').includes('Scripts/bet-line-picker.js'),'Shared picker loaded: '+file);
 console.log('Manual football, esports and champion integration checks passed.');

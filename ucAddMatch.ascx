@@ -177,9 +177,8 @@
                                                 Rate
                                             </button>
                                         </th>
-                                        <th class="p-2 text-right border-r w-[20%]">Hiệp 1</th>
-                                        <th class="p-2 text-right border-r w-[20%] bg-blue-50 text-blue-700 font-black">Cả trận</th>
-                                        <th class="p-2 text-right w-[20%]">Hiệp 2</th>
+                                        <th class="p-2 text-right border-r w-[30%]">Hiệp 1</th>
+                                        <th class="p-2 text-right border-r w-[30%] bg-blue-50 text-blue-700 font-black">Cả trận</th>
                                     </tr>
                                 </thead>
                             <tbody class="divide-y divide-gray-200 font-bold">
@@ -187,130 +186,109 @@
                                     <td class="p-2 text-gray-500 bg-gray-50/30 border-r text-right">Tài bàn</td>
                                     <td class="p-1 border-r"><asp:TextBox ID="h1_goal_over_under" data-line-picker="true" ReadOnly="true" role="combobox" aria-haspopup="listbox" aria-expanded="false" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
                                     <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_goal_over_under" data-line-picker="true" ReadOnly="true" role="combobox" aria-haspopup="listbox" aria-expanded="false" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
-                                    <td class="p-1"><asp:TextBox ID="h2_goal_over_under" data-line-picker="true" ReadOnly="true" role="combobox" aria-haspopup="listbox" aria-expanded="false" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
                                 </tr>
                                 <tr class="rate-row hidden">
                                     <td class="p-2 text-red-500 bg-gray-50/30 border-r text-right">Rate tài</td>
-                                    <td class="p-1 border-r"><asp:TextBox ID="h1_goal_over_win" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
-                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_goal_over_win" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
-                                    <td class="p-1"><asp:TextBox ID="h2_goal_over_win" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
+                                    <td class="p-1 border-r"><asp:TextBox ID="h1_goal_over_win" inputmode="decimal" autocomplete="off" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
+                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_goal_over_win" inputmode="decimal" autocomplete="off" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
                                 </tr>
                                 <tr class="rate-row hidden">
                                     <td class="p-2 text-red-500 bg-gray-50/30 border-r text-right">Rate xỉu</td>
-                                    <td class="p-1 border-r"><asp:TextBox ID="h1_goal_under_win" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
-                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_goal_under_win" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
-                                    <td class="p-1"><asp:TextBox ID="h2_goal_under_win" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
+                                    <td class="p-1 border-r"><asp:TextBox ID="h1_goal_under_win" inputmode="decimal" autocomplete="off" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
+                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_goal_under_win" inputmode="decimal" autocomplete="off" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
                                 </tr>
                                 <tr>
                                     <td class="p-2 text-gray-500 bg-gray-50/30 border-r text-right">Bàn (chủ nhà)</td>
                                     <td class="p-1 border-r"><asp:TextBox ID="h1_goal_handicap" data-line-picker="true" ReadOnly="true" role="combobox" aria-haspopup="listbox" aria-expanded="false" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
                                     <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_goal_handicap" data-line-picker="true" ReadOnly="true" role="combobox" aria-haspopup="listbox" aria-expanded="false" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
-                                    <td class="p-1"><asp:TextBox ID="h2_goal_handicap" data-line-picker="true" ReadOnly="true" role="combobox" aria-haspopup="listbox" aria-expanded="false" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
                                 </tr>
                                 <tr class="rate-row hidden">
                                     <td class="p-2 text-red-500 bg-gray-50/30 border-r text-right">Rate chủ</td>
-                                    <td class="p-1 border-r"><asp:TextBox ID="h1_goal_home_win" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
-                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_goal_home_win" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
-                                    <td class="p-1"><asp:TextBox ID="h2_goal_home_win" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
+                                    <td class="p-1 border-r"><asp:TextBox ID="h1_goal_home_win" inputmode="decimal" autocomplete="off" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
+                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_goal_home_win" inputmode="decimal" autocomplete="off" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
                                 </tr>
                                 <tr class="rate-row hidden">
                                     <td class="p-2 text-red-500 bg-gray-50/30 border-r text-right">Rate khách</td>
-                                    <td class="p-1 border-r"><asp:TextBox ID="h1_goal_way_win" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
-                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_goal_way_win" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
-                                    <td class="p-1"><asp:TextBox ID="h2_goal_way_win" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
+                                    <td class="p-1 border-r"><asp:TextBox ID="h1_goal_way_win" inputmode="decimal" autocomplete="off" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
+                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_goal_way_win" inputmode="decimal" autocomplete="off" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
                                 </tr>
 								
                                 <tr class="border-t-2">
                                     <td class="p-2 text-gray-500 bg-orange-50/100 border-r text-right">Chủ</td>
-                                    <td class="p-1 border-r"><asp:TextBox ID="h1_euro_home" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none" ></asp:TextBox></td>
-                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_euro_home" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none text-blue-600" ></asp:TextBox></td>
-                                    <td class="p-1"><asp:TextBox ID="h2_euro_home" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none" ></asp:TextBox></td>
+                                    <td class="p-1 border-r"><asp:TextBox ID="h1_euro_home" inputmode="decimal" autocomplete="off" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none" ></asp:TextBox></td>
+                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_euro_home" inputmode="decimal" autocomplete="off" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none text-blue-600" ></asp:TextBox></td>
                                 </tr>
                                 <tr>
                                     <td class="p-2 text-gray-500 bg-orange-50/100 border-r text-right">Hòa</td>
-                                    <td class="p-1 border-r"><asp:TextBox ID="h1_euro_draw" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none" ></asp:TextBox></td>
-                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_euro_draw" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none text-blue-600" ></asp:TextBox></td>
-                                    <td class="p-1"><asp:TextBox ID="h2_euro_draw" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none" ></asp:TextBox></td>
+                                    <td class="p-1 border-r"><asp:TextBox ID="h1_euro_draw" inputmode="decimal" autocomplete="off" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none" ></asp:TextBox></td>
+                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_euro_draw" inputmode="decimal" autocomplete="off" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none text-blue-600" ></asp:TextBox></td>
                                 </tr>
                                 <tr>
                                     <td class="p-2 text-gray-500 bg-orange-50/100 border-r text-right">Khách</td>
-                                    <td class="p-1 border-r"><asp:TextBox ID="h1_euro_way" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none" ></asp:TextBox></td>
-                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_euro_way" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none text-blue-600" ></asp:TextBox></td>
-                                    <td class="p-1"><asp:TextBox ID="h2_euro_way" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none" ></asp:TextBox></td>
+                                    <td class="p-1 border-r"><asp:TextBox ID="h1_euro_way" inputmode="decimal" autocomplete="off" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none" ></asp:TextBox></td>
+                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_euro_way" inputmode="decimal" autocomplete="off" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none text-blue-600" ></asp:TextBox></td>
                                 </tr>
 								
                                 <tr class="border-t-2">
                                     <td class="p-2 text-gray-500 bg-gray-50/30 border-r text-right">Tài góc</td>
                                     <td class="p-1 border-r"><asp:TextBox ID="h1_conner_over_under" data-line-picker="true" ReadOnly="true" role="combobox" aria-haspopup="listbox" aria-expanded="false" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
                                     <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_conner_over_under" data-line-picker="true" ReadOnly="true" role="combobox" aria-haspopup="listbox" aria-expanded="false" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
-                                    <td class="p-1"><asp:TextBox ID="h2_conner_over_under" data-line-picker="true" ReadOnly="true" role="combobox" aria-haspopup="listbox" aria-expanded="false" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
                                 </tr>
                                 <tr class="rate-row hidden">
                                     <td class="p-2 text-red-500 bg-gray-50/30 border-r text-right">Rate tài</td>
-                                    <td class="p-1 border-r"><asp:TextBox ID="h1_conner_over_win" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
-                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_conner_over_win" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
-                                    <td class="p-1"><asp:TextBox ID="h2_conner_over_win" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
+                                    <td class="p-1 border-r"><asp:TextBox ID="h1_conner_over_win" inputmode="decimal" autocomplete="off" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
+                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_conner_over_win" inputmode="decimal" autocomplete="off" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
                                 </tr>
                                 <tr class="rate-row hidden">
                                     <td class="p-2 text-red-500 bg-gray-50/30 border-r text-right">Rate xỉu</td>
-                                    <td class="p-1 border-r"><asp:TextBox ID="h1_conner_under_win" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
-                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_conner_under_win" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
-                                    <td class="p-1"><asp:TextBox ID="h2_conner_under_win" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
+                                    <td class="p-1 border-r"><asp:TextBox ID="h1_conner_under_win" inputmode="decimal" autocomplete="off" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
+                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_conner_under_win" inputmode="decimal" autocomplete="off" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
                                 </tr>
                                 <tr>
                                     <td class="p-2 text-gray-500 bg-gray-50/30 border-r text-right">Góc (chủ nhà)</td>
                                     <td class="p-1 border-r"><asp:TextBox ID="h1_conner_handicap" data-line-picker="true" ReadOnly="true" role="combobox" aria-haspopup="listbox" aria-expanded="false" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
                                     <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_conner_handicap" data-line-picker="true" ReadOnly="true" role="combobox" aria-haspopup="listbox" aria-expanded="false" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
-                                    <td class="p-1"><asp:TextBox ID="h2_conner_handicap" data-line-picker="true" ReadOnly="true" role="combobox" aria-haspopup="listbox" aria-expanded="false" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
                                 </tr>
                                 <tr class="rate-row hidden">
                                     <td class="p-2 text-red-500 bg-gray-50/30 border-r text-right">Rate chủ</td>
-                                    <td class="p-1 border-r"><asp:TextBox ID="h1_conner_home_win" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
-                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_conner_home_win" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
-                                    <td class="p-1"><asp:TextBox ID="h2_conner_home_win" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
+                                    <td class="p-1 border-r"><asp:TextBox ID="h1_conner_home_win" inputmode="decimal" autocomplete="off" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
+                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_conner_home_win" inputmode="decimal" autocomplete="off" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
                                 </tr>
                                 <tr class="rate-row hidden">
                                     <td class="p-2 text-red-500 bg-gray-50/30 border-r text-right">Rate khách</td>
-                                    <td class="p-1 border-r"><asp:TextBox ID="h1_conner_way_win" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
-                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_conner_way_win" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
-                                    <td class="p-1"><asp:TextBox ID="h2_conner_way_win" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
+                                    <td class="p-1 border-r"><asp:TextBox ID="h1_conner_way_win" inputmode="decimal" autocomplete="off" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
+                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_conner_way_win" inputmode="decimal" autocomplete="off" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
                                 </tr>
 								
 								<tr class="border-t-2">
                                     <td class="p-2 text-gray-500 bg-gray-50/30 border-r text-right">Tài thẻ</td>
                                     <td class="p-1 border-r"><asp:TextBox ID="h1_card_over_under" data-line-picker="true" ReadOnly="true" role="combobox" aria-haspopup="listbox" aria-expanded="false" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
                                     <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_card_over_under" data-line-picker="true" ReadOnly="true" role="combobox" aria-haspopup="listbox" aria-expanded="false" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
-                                    <td class="p-1"><asp:TextBox ID="h2_card_over_under" data-line-picker="true" ReadOnly="true" role="combobox" aria-haspopup="listbox" aria-expanded="false" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
                                 </tr>
                                 <tr class="rate-row hidden">
                                     <td class="p-2 text-red-500 bg-gray-50/30 border-r text-right">Rate tài</td>
-                                    <td class="p-1 border-r"><asp:TextBox ID="h1_card_over_win" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
-                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_card_over_win" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
-                                    <td class="p-1"><asp:TextBox ID="h2_card_over_win" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
+                                    <td class="p-1 border-r"><asp:TextBox ID="h1_card_over_win" inputmode="decimal" autocomplete="off" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
+                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_card_over_win" inputmode="decimal" autocomplete="off" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
                                 </tr>
                                 <tr class="rate-row hidden">
                                     <td class="p-2 text-red-500 bg-gray-50/30 border-r text-right">Rate xỉu</td>
-                                    <td class="p-1 border-r"><asp:TextBox ID="h1_card_under_win" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
-                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_card_under_win" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
-                                    <td class="p-1"><asp:TextBox ID="h2_card_under_win" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
+                                    <td class="p-1 border-r"><asp:TextBox ID="h1_card_under_win" inputmode="decimal" autocomplete="off" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
+                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_card_under_win" inputmode="decimal" autocomplete="off" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
                                 </tr>
                                 <tr>
                                     <td class="p-2 text-gray-500 bg-gray-50/30 border-r text-right">Thẻ (chủ nhà)</td>
                                     <td class="p-1 border-r"><asp:TextBox ID="h1_card_handicap" data-line-picker="true" ReadOnly="true" role="combobox" aria-haspopup="listbox" aria-expanded="false" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
                                     <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_card_handicap" data-line-picker="true" ReadOnly="true" role="combobox" aria-haspopup="listbox" aria-expanded="false" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
-                                    <td class="p-1"><asp:TextBox ID="h2_card_handicap" data-line-picker="true" ReadOnly="true" role="combobox" aria-haspopup="listbox" aria-expanded="false" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
                                 </tr>
                                 <tr class="rate-row hidden">
                                     <td class="p-2 text-red-500 bg-gray-50/30 border-r text-right">Rate chủ</td>
-                                    <td class="p-1 border-r"><asp:TextBox ID="h1_card_home_win" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
-                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_card_home_win" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
-                                    <td class="p-1"><asp:TextBox ID="h2_card_home_win" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
+                                    <td class="p-1 border-r"><asp:TextBox ID="h1_card_home_win" inputmode="decimal" autocomplete="off" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
+                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_card_home_win" inputmode="decimal" autocomplete="off" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
                                 </tr>
                                 <tr class="rate-row hidden">
                                     <td class="p-2 text-red-500 bg-gray-50/30 border-r text-right">Rate khách</td>
-                                    <td class="p-1 border-r"><asp:TextBox ID="h1_card_way_win" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
-                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_card_way_win" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
-                                    <td class="p-1"><asp:TextBox ID="h2_card_way_win" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
+                                    <td class="p-1 border-r"><asp:TextBox ID="h1_card_way_win" inputmode="decimal" autocomplete="off" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
+                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_card_way_win" inputmode="decimal" autocomplete="off" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -336,41 +314,6 @@
 <uc:NumericKeyboard runat="server" ID="ucNumericKeyboard" />
 
 <script>
-    // Attach numeric keyboard to decimal fields
-    window.addEventListener('load', function() {
-        const decimalFields = [
-            'h1_conner_over_under', 'ft_conner_over_under', 'h2_conner_over_under',
-            'h1_conner_handicap', 'ft_conner_handicap', 'h2_conner_handicap',
-            'h1_goal_over_under', 'ft_goal_over_under', 'h2_goal_over_under',
-            'h1_goal_handicap', 'ft_goal_handicap', 'h2_goal_handicap',
-			'h1_card_over_under', 'ft_card_over_under', 'h2_card_over_under',
-            'h1_card_handicap', 'ft_card_handicap', 'h2_card_handicap',
-            'h1_euro_home', 'ft_euro_home', 'h2_euro_home',
-            'h1_euro_draw', 'ft_euro_draw', 'h2_euro_draw',
-            'h1_euro_way', 'ft_euro_way', 'h2_euro_way',
-            'h1_conner_over_win', 'ft_conner_over_win', 'h2_conner_over_win',
-            'h1_conner_under_win', 'ft_conner_under_win', 'h2_conner_under_win',
-            'h1_conner_home_win', 'ft_conner_home_win', 'h2_conner_home_win',
-            'h1_conner_way_win', 'ft_conner_way_win', 'h2_conner_way_win',
-            'h1_goal_over_win', 'ft_goal_over_win', 'h2_goal_over_win',
-            'h1_goal_under_win', 'ft_goal_under_win', 'h2_goal_under_win',
-            'h1_goal_home_win', 'ft_goal_home_win', 'h2_goal_home_win',
-            'h1_goal_way_win', 'ft_goal_way_win', 'h2_goal_way_win',
-            'h1_card_over_win', 'ft_card_over_win', 'h2_card_over_win',
-            'h1_card_under_win', 'ft_card_under_win', 'h2_card_under_win',
-            'h1_card_home_win', 'ft_card_home_win', 'h2_card_home_win',
-            'h1_card_way_win', 'ft_card_way_win', 'h2_card_way_win'
-        ];
-        
-        const selectors = decimalFields.map(function(fieldId) {
-            return '[id$="' + fieldId + '"]';
-        });
-        
-        if (window.NumericKeyboard) {
-            window.NumericKeyboard.attachToFields(selectors);
-        }
-    });
-    
     // Hiển thị lỗi inline kèm animation shake
     function showError(el, text) {
         el.innerText = text;
@@ -469,33 +412,33 @@
         
         // Thu thập tất cả các trường số
         const fields = [
-            'h1_conner_over_under', 'ft_conner_over_under', 'h2_conner_over_under',
-            'h1_conner_handicap', 'ft_conner_handicap', 'h2_conner_handicap',
-            'h1_goal_over_under', 'ft_goal_over_under', 'h2_goal_over_under',
-            'h1_goal_handicap', 'ft_goal_handicap', 'h2_goal_handicap',
-            'h1_card_over_under', 'ft_card_over_under', 'h2_card_over_under',
-            'h1_card_handicap', 'ft_card_handicap', 'h2_card_handicap',
-            'h1_euro_home', 'ft_euro_home', 'h2_euro_home',
-            'h1_euro_draw', 'ft_euro_draw', 'h2_euro_draw',
-            'h1_euro_way', 'ft_euro_way', 'h2_euro_way',
-            'h1_conner_over_win', 'ft_conner_over_win', 'h2_conner_over_win',
-            'h1_conner_under_win', 'ft_conner_under_win', 'h2_conner_under_win',
-            'h1_conner_home_win', 'ft_conner_home_win', 'h2_conner_home_win',
-            'h1_conner_way_win', 'ft_conner_way_win', 'h2_conner_way_win',
-            'h1_goal_over_win', 'ft_goal_over_win', 'h2_goal_over_win',
-            'h1_goal_under_win', 'ft_goal_under_win', 'h2_goal_under_win',
-            'h1_goal_home_win', 'ft_goal_home_win', 'h2_goal_home_win',
-            'h1_goal_way_win', 'ft_goal_way_win', 'h2_goal_way_win',
-            'h1_card_over_win', 'ft_card_over_win', 'h2_card_over_win',
-            'h1_card_under_win', 'ft_card_under_win', 'h2_card_under_win',
-            'h1_card_home_win', 'ft_card_home_win', 'h2_card_home_win',
-            'h1_card_way_win', 'ft_card_way_win', 'h2_card_way_win'
+            'h1_conner_over_under', 'ft_conner_over_under',
+            'h1_conner_handicap', 'ft_conner_handicap',
+            'h1_goal_over_under', 'ft_goal_over_under',
+            'h1_goal_handicap', 'ft_goal_handicap',
+            'h1_card_over_under', 'ft_card_over_under',
+            'h1_card_handicap', 'ft_card_handicap',
+            'h1_euro_home', 'ft_euro_home',
+            'h1_euro_draw', 'ft_euro_draw',
+            'h1_euro_way', 'ft_euro_way',
+            'h1_conner_over_win', 'ft_conner_over_win',
+            'h1_conner_under_win', 'ft_conner_under_win',
+            'h1_conner_home_win', 'ft_conner_home_win',
+            'h1_conner_way_win', 'ft_conner_way_win',
+            'h1_goal_over_win', 'ft_goal_over_win',
+            'h1_goal_under_win', 'ft_goal_under_win',
+            'h1_goal_home_win', 'ft_goal_home_win',
+            'h1_goal_way_win', 'ft_goal_way_win',
+            'h1_card_over_win', 'ft_card_over_win',
+            'h1_card_under_win', 'ft_card_under_win',
+            'h1_card_home_win', 'ft_card_home_win',
+            'h1_card_way_win', 'ft_card_way_win'
         ];
         
         fields.forEach(field => {
             const element = document.querySelector('[id$="' + field + '"]');
             if (element) {
-                matchData[field] = element.value;
+                matchData[field] = element.value.trim().replace(/,/g, '.');
             }
         });
         
@@ -671,27 +614,27 @@
 
         // Fill các trường số
         const fields = [
-            'h1_conner_over_under', 'ft_conner_over_under', 'h2_conner_over_under',
-            'h1_conner_handicap', 'ft_conner_handicap', 'h2_conner_handicap',
-            'h1_goal_over_under', 'ft_goal_over_under', 'h2_goal_over_under',
-            'h1_goal_handicap', 'ft_goal_handicap', 'h2_goal_handicap',
-			'h1_card_over_under', 'ft_card_over_under', 'h2_card_over_under',
-            'h1_card_handicap', 'ft_card_handicap', 'h2_card_handicap',
-            'h1_euro_home', 'ft_euro_home', 'h2_euro_home',
-            'h1_euro_draw', 'ft_euro_draw', 'h2_euro_draw',
-            'h1_euro_way', 'ft_euro_way', 'h2_euro_way',
-            'h1_conner_over_win', 'ft_conner_over_win', 'h2_conner_over_win',
-            'h1_conner_under_win', 'ft_conner_under_win', 'h2_conner_under_win',
-            'h1_conner_home_win', 'ft_conner_home_win', 'h2_conner_home_win',
-            'h1_conner_way_win', 'ft_conner_way_win', 'h2_conner_way_win',
-            'h1_goal_over_win', 'ft_goal_over_win', 'h2_goal_over_win',
-            'h1_goal_under_win', 'ft_goal_under_win', 'h2_goal_under_win',
-            'h1_goal_home_win', 'ft_goal_home_win', 'h2_goal_home_win',
-            'h1_goal_way_win', 'ft_goal_way_win', 'h2_goal_way_win',
-            'h1_card_over_win', 'ft_card_over_win', 'h2_card_over_win',
-            'h1_card_under_win', 'ft_card_under_win', 'h2_card_under_win',
-            'h1_card_home_win', 'ft_card_home_win', 'h2_card_home_win',
-            'h1_card_way_win', 'ft_card_way_win', 'h2_card_way_win'
+            'h1_conner_over_under', 'ft_conner_over_under',
+            'h1_conner_handicap', 'ft_conner_handicap',
+            'h1_goal_over_under', 'ft_goal_over_under',
+            'h1_goal_handicap', 'ft_goal_handicap',
+			'h1_card_over_under', 'ft_card_over_under',
+            'h1_card_handicap', 'ft_card_handicap',
+            'h1_euro_home', 'ft_euro_home',
+            'h1_euro_draw', 'ft_euro_draw',
+            'h1_euro_way', 'ft_euro_way',
+            'h1_conner_over_win', 'ft_conner_over_win',
+            'h1_conner_under_win', 'ft_conner_under_win',
+            'h1_conner_home_win', 'ft_conner_home_win',
+            'h1_conner_way_win', 'ft_conner_way_win',
+            'h1_goal_over_win', 'ft_goal_over_win',
+            'h1_goal_under_win', 'ft_goal_under_win',
+            'h1_goal_home_win', 'ft_goal_home_win',
+            'h1_goal_way_win', 'ft_goal_way_win',
+            'h1_card_over_win', 'ft_card_over_win',
+            'h1_card_under_win', 'ft_card_under_win',
+            'h1_card_home_win', 'ft_card_home_win',
+            'h1_card_way_win', 'ft_card_way_win'
         ];
 
         fields.forEach(field => {
@@ -881,7 +824,7 @@
     // Format số thập phân ##0.00
         // Format số thập phân ##0.00
     function formatDecimal(input) {
-        let val = input.value.trim();
+        let val = input.value.trim().replace(/,/g, '.');
         if (val === '' || val === '-') return;
         
         // Loại bỏ ký tự không phải số, dấu chấm, dấu trừ
@@ -1033,3 +976,5 @@
 
 
 <script src="Scripts/bet-line-picker.js?v=20261117"></script>
+
+<script src="Scripts/native-number-inputs.js?v=20261117"></script>

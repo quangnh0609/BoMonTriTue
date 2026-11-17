@@ -287,7 +287,7 @@
                     const td = document.createElement('td'); td.className = 'p-1 border ' + (period === '3' ? 'bg-blue-50/30 text-blue-700' : '');
                     if (type === '7' && period === '3') { td.textContent = '—'; tr.appendChild(td); return; }
                     const item = market(type, period), original = originals[item.Code];
-                    const input = document.createElement('input'); input.type = 'text'; input.inputMode = property === 'Line' && ['1', '3', '6', '7'].includes(type) ? 'text' : 'decimal'; input.autocomplete = 'off'; input.maxLength = 24;
+                    const input = document.createElement('input'); input.type = 'text'; input.inputMode = 'decimal'; input.autocomplete = 'off'; input.maxLength = 24;
                     input.className = 'w-full min-w-0 p-2 text-right bg-transparent outline-none focus:bg-white focus:ring-1 focus:ring-blue-400'; input.value = item[property];
                     input.dataset.fixture = m.Id; input.dataset.code = item.Code; input.dataset.field = property;
                     if (property === 'Line' && type !== '7') {
@@ -320,7 +320,7 @@
         try {
             const data = await api({ action: 'preview', ids: pendingIds, snapshot });
             previewToken = data.previewToken; renderPreview(data.matches);
-            el('webMatchPreviewMessage').textContent = 'Sửa trực tiếp mốc và Rate của từng trận. H1 và FT sửa độc lập; xóa mốc để bỏ kèo, xóa đủ ba giá để bỏ 1X2. Không lấy H2. Giao bóng H1 cần được giữ.';
+            el('webMatchPreviewMessage').textContent = '';
             el('webMatchResultsMessage').textContent = ''; show('webMatchPreview');
         } catch (e) { el('webMatchResultsMessage').textContent = e.message; }
         finally { lock(false); }

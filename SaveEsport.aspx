@@ -239,11 +239,11 @@
             object raw;
             decimal rate;
             if (!d.TryGetValue(key, out raw) || raw == null || String.IsNullOrWhiteSpace(raw.ToString()) ||
-                (decimal.TryParse(raw.ToString(), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out rate) && rate == 0))
+                (decimal.TryParse(raw.ToString().Replace(',', '.'), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out rate) && rate == 0))
                 return 0.9m;
         }
         if (!d.ContainsKey(key)) return DBNull.Value;
-        string v = (d[key] ?? "").ToString().Trim();
+        string v = (d[key] ?? "").ToString().Trim().Replace(',', '.');
         if (string.IsNullOrEmpty(v)) return DBNull.Value;
         decimal result;
         if (decimal.TryParse(v, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out result))

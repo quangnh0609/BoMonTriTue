@@ -187,7 +187,7 @@ public static class WebMatchImport
             // Explicit market allowlist: exclude team totals, European handicap, cards points, etc.
             string period = "3", baseName = name;
             if (name.EndsWith("_h1")) { period = "1"; baseName = name.Substring(0, name.Length - 3); }
-            else if (name.EndsWith("_h2")) { period = "2"; baseName = name.Substring(0, name.Length - 3); }
+            else if (name.EndsWith("_h2")) continue;
             string code = null;
             bool total = false, euro = false;
             switch (baseName)
