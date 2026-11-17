@@ -924,7 +924,7 @@
     private static object ParseDecimalOrDbNull(Dictionary<string, object> d, string key)
     {
         if (!d.ContainsKey(key) || d[key] == null) return DBNull.Value;
-        string raw = d[key].ToString().Trim();
+        string raw = d[key].ToString().Trim().Replace(',', '.');
         if (raw.Contains(":"))
         {
             string[] parts = raw.Split(':');
@@ -1661,12 +1661,6 @@
                         this.value = `${digits.slice(0, -2)}:${digits.slice(-2)}`;
                     });
                 });
-                if (window.NumericKeyboard) {
-                    window.NumericKeyboard.attachToFields([
-                        '#erBody input[data-number-input]',
-                        '#erBody input[data-minute-mask]'
-                    ]);
-                }
                 document.getElementById('modalEsportResult').classList.remove('hidden');
                 document.getElementById('modalEsportResult').classList.add('flex');
                 document.getElementById('modalEsportResult').dataset.matchId = matchId;
@@ -1705,8 +1699,9 @@
             document.querySelectorAll('#erBody [data-game][data-field]').forEach(el => {
                 const g = Number(el.getAttribute('data-game'));
                 const f = el.getAttribute('data-field');
-                const value = (el.value || '').trim();
-                const originalValue = (el.getAttribute('data-original-value') || '').trim();
+                const normalize = value => el.hasAttribute('data-number-input') ? value.trim().replace(/,/g, '.') : value.trim();
+                const value = normalize(el.value || '');
+                const originalValue = normalize(el.getAttribute('data-original-value') || '');
                 if (f === 'result_minute' && value) {
                     const parts = value.split(':');
                     const seconds = parts.length === 2 ? Number(parts[1]) : NaN;

@@ -2,7 +2,7 @@
     'use strict';
     if (window.NativeNumberInputs) return;
     function isNumeric(field) {
-        return field && field.tagName === 'INPUT' && field.inputMode === 'decimal' &&
+        return field && field.tagName === 'INPUT' && ['decimal', 'numeric'].includes(field.inputMode) &&
             !field.readOnly && !field.disabled && !field.hasAttribute('data-line-picker');
     }
     function selectValue(event) {
