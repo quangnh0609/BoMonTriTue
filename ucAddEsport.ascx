@@ -20,7 +20,10 @@
     .keo-input:focus { border-color: #7c3aed; background: white; }
     .section-title { font-size: 11px; font-weight: 900; color: #7c3aed; text-transform: uppercase; letter-spacing: 0.05em; padding: 4px 0; border-bottom: 2px solid #ede9fe; margin-bottom: 8px; }
     .esport-game-shell { border: 1px solid #e5e7eb; border-radius: 0 0 10px 10px; border-top: none; background: rgba(249,250,251,0.3); display: flex; flex-direction: column; }
-    .esport-game-scroll { max-height: min(52vh, 520px); overflow-y: auto; padding: 12px; }
+    #modalAddEsport > div { max-height: 95vh; max-height: 95dvh; min-height: 0; }
+    #esportFormContent { min-height: 0; overscroll-behavior-y: contain; scroll-padding-block: 12px; }
+    /* The form owns scrolling so the last market needs no second inner scroll. */
+    .esport-game-scroll { padding: 12px; }
 </style>
 
 <script runat="server">
