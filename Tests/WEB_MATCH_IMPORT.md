@@ -1,5 +1,7 @@
 # Lấy từ web — The Odds API v4
 
+Giới hạn giá nguồn cho cả The Odds API và API-Football: chỉ nhận cặp Over/Under hoặc Home/Away khi cả hai giá decimal đều từ 1.75 đến 2.15 (bao gồm hai biên). Lọc trước khi ưu tiên market chính và chọn mốc cân giá; áp dụng cả bàn thắng/góc/thẻ và H1 có từ nguồn. Không áp dụng giới hạn này cho 1X2 hoặc giá người dùng sửa trong bước xem trước. Quy tắc lưu giá 0.9 và suy H1 giữ nguyên.
+
 ## Chọn nguồn API
 
 Bấm Lấy từ web để chọn The Odds API hoặc API-Football trước khi lọc ngày/giải. The Odds API giữ cơ chế cũ. Mỗi nguồn có key, cache và hạn mức riêng; đổi nguồn xóa danh sách/lựa chọn, backend kiểm tra nguồn khớp snapshot.

@@ -85,6 +85,17 @@ public static class WebMatchImportTests
         Check(WebMatchImport.FirstHalfLine(0) == 0 && WebMatchImport.FirstHalfLine(.25m) == 0, "Clamp small lines to zero");
         string priorityJson = @"[{'key':'a','title':'A','markets':[{'key':'alternate_spreads','outcomes':[{'name':'Home FC','point':-1.5,'price':1.9},{'name':'Away FC','point':1.5,'price':1.9}]},{'key':'spreads','outcomes':[{'name':'Home FC','point':-0.5,'price':1.8},{'name':'Away FC','point':0.5,'price':2.0}]}]}]".Replace('\'', '"');
         Check(WebMatchImport.SelectMarkets(WebMatchImport.Rows(new JavaScriptSerializer().DeserializeObject(priorityJson)), "Home FC", "Away FC").Single().Line == -.5m, "Prefer main handicap over closer-priced alternate");
+        foreach (string kind in new[] { "totals", "spreads", "totals_h1", "alternate_totals_corners", "alternate_spreads_cards" })
+        foreach (decimal[] prices in new[] { new[] { 1.75m, 2.15m }, new[] { 2.15m, 1.75m }, new[] { 1.74m, 1.9m }, new[] { 1.9m, 1.74m }, new[] { 2.16m, 1.9m }, new[] { 1.9m, 2.16m }, new[] { 1.74m, 1.74m }, new[] { 2.16m, 2.16m } })
+        {
+            bool total = kind.Contains("totals");
+            string sampleJson = "[{'key':'a','markets':[{'key':'" + kind + "','outcomes':[{'name':'" + (total ? "Over" : "Home FC") + "','point':0,'price':" + prices[0].ToString(System.Globalization.CultureInfo.InvariantCulture) + "},{'name':'" + (total ? "Under" : "Away FC") + "','point':0,'price':" + prices[1].ToString(System.Globalization.CultureInfo.InvariantCulture) + "}]}]}]";
+            var selected = WebMatchImport.SelectMarkets(WebMatchImport.Rows(new JavaScriptSerializer().DeserializeObject(sampleJson.Replace('\'', '"'))), "Home FC", "Away FC");
+            bool eligible = prices.All(p => p >= 1.75m && p <= 2.15m);
+            Check(selected.Count == (eligible ? 1 : 0), "Both source odds must be within inclusive range for " + kind);
+        }
+        string filteredMain = priorityJson.Replace("\"price\":1.8", "\"price\":1.74");
+        Check(WebMatchImport.SelectMarkets(WebMatchImport.Rows(new JavaScriptSerializer().DeserializeObject(filteredMain)), "Home FC", "Away FC").Single().Line == -1.5m, "Reject out-of-range main line before preferring it over eligible alternate");
         Check(WebMatchImport.LikeLiteral("A_%[~B") == "A~_~%~[~~B", "Escape literal SQL LIKE wildcard characters");
         var today = new DateTime(2026, 12, 29);
         var datesInput = new JavaScriptSerializer().Deserialize<System.Collections.Generic.Dictionary<string, object>>(@"{'dates':['2027-01-04','2026-12-29','2026-12-29'] }".Replace('\'', '"'));

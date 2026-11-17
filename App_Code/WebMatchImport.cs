@@ -220,6 +220,8 @@ public static class WebMatchImport
                     return Str(v, "name") == (total ? "Under" : awayTeam) && Decimal.TryParse(Str(v, "point"), NumberStyles.Float, CultureInfo.InvariantCulture, out n) && n == (total ? line : -line);
                 });
                 if (other == null || !Odd(value, out first) || !Odd(other, out second)) continue;
+                // Filter source decimal odds before ranking lines or converting payouts.
+                if (first < 1.75m || first > 2.15m || second < 1.75m || second > 2.15m) continue;
                 decimal diff = Math.Abs(first - second);
                 bool alternate = baseName.StartsWith("alternate_");
                 if (!best.ContainsKey(code) || (best[code].IsAlternate && !alternate) || (best[code].IsAlternate == alternate && diff < best[code].Difference))
