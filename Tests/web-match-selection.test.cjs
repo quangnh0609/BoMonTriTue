@@ -28,7 +28,7 @@ let reloads = 0;
 const kind = process.env.WEB_MATCH_TEST_KIND || 'đội';
 const context = {
     document: { getElementById: el, createElement: () => new Element(), body: { style: {} }, addEventListener() {} },
-    window: { webMatchToken: 'token', location: { reload() { reloads++; } } },
+    window: { BetLinePicker: { prepare() {} }, webMatchToken: 'token', location: { reload() { reloads++; } } },
     fetch: async (_, request) => {
         const data = JSON.parse(request.body); requests.push(data);
         return { json: async () => data.teamChoices.sourceTeam ? { ok: true, count: 1 } : {
@@ -85,8 +85,10 @@ context.fetch = async (_, request) => {
         const rateButton=firstRows[0].children[0].children[0]; rateButton.onclick();
         assert(!firstRows[2].classList.contains('hidden'),'Rate button reveals prices');
         rateButton.onclick(); assert(firstRows[2].classList.contains('hidden'),'Rate button hides prices again');
-        assert.equal(firstRows[4].children[2].children[0].inputMode,'text','Handicap keyboard must allow minus sign');
-        assert.equal(firstRows[1].children[2].children[0].inputMode,'decimal','Totals retain decimal keyboard');
+        assert.equal(firstRows[4].children[2].children[0].inputMode,'none','Handicap uses line dropdown');
+        assert.equal(firstRows[1].children[2].children[0].inputMode,'none','Totals use line dropdown');
+        assert.equal(firstRows[4].children[2].children[0].readOnly,true,'Dropdown prevents typing a handicap');
+        assert.equal(firstRows[7].children[2].children[0].inputMode,'decimal','1X2 remains numeric input');
         function edit(rows,row,column,value) { const input=rows[row].children[column].children[0]; input.value=value; input.oninput(); }
         edit(firstRows,4,2,'-0,75'); edit(firstRows,5,2,'0,85'); edit(firstRows,6,2,'0.95');
         edit(firstRows,1,2,'2.5'); edit(firstRows,2,2,'1.1'); edit(firstRows,3,2,'0.8');

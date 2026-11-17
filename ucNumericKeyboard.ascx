@@ -441,7 +441,7 @@
                 attachToFields: function(fieldSelectors) {
                     fieldSelectors.forEach(function(selector) {
                         document.querySelectorAll(selector).forEach(function(field) {
-                            if (!field || field.hasAttribute('data-numeric-keyboard-bound')) return;
+                            if (!field || field.hasAttribute('data-line-picker') || field.hasAttribute('data-numeric-keyboard-bound')) return;
                             // Chặn bàn phím mặc định
                             field.setAttribute('readonly', 'readonly');
                             field.setAttribute('data-numeric-keyboard', 'true');

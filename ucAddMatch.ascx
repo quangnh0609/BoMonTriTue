@@ -1,4 +1,4 @@
-﻿<%@ Control Language="C#" AutoEventWireup="true" %>
+<%@ Control Language="C#" AutoEventWireup="true" %>
 <%@ Register Src="~/ucNumericKeyboard.ascx" TagPrefix="uc" TagName="NumericKeyboard" %>
 <%@ Import Namespace="System.Data" %>
 <%@ Import Namespace="System.Data.SqlClient" %>
@@ -185,9 +185,9 @@
                             <tbody class="divide-y divide-gray-200 font-bold">
                                 <tr>
                                     <td class="p-2 text-gray-500 bg-gray-50/30 border-r text-right">Tài bàn</td>
-                                    <td class="p-1 border-r"><asp:TextBox ID="h1_goal_over_under" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
-                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_goal_over_under" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
-                                    <td class="p-1"><asp:TextBox ID="h2_goal_over_under" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
+                                    <td class="p-1 border-r"><asp:TextBox ID="h1_goal_over_under" data-line-picker="true" ReadOnly="true" role="combobox" aria-haspopup="listbox" aria-expanded="false" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
+                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_goal_over_under" data-line-picker="true" ReadOnly="true" role="combobox" aria-haspopup="listbox" aria-expanded="false" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
+                                    <td class="p-1"><asp:TextBox ID="h2_goal_over_under" data-line-picker="true" ReadOnly="true" role="combobox" aria-haspopup="listbox" aria-expanded="false" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
                                 </tr>
                                 <tr class="rate-row hidden">
                                     <td class="p-2 text-red-500 bg-gray-50/30 border-r text-right">Rate tài</td>
@@ -203,9 +203,9 @@
                                 </tr>
                                 <tr>
                                     <td class="p-2 text-gray-500 bg-gray-50/30 border-r text-right">Bàn (chủ nhà)</td>
-                                    <td class="p-1 border-r"><asp:TextBox ID="h1_goal_handicap" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
-                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_goal_handicap" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
-                                    <td class="p-1"><asp:TextBox ID="h2_goal_handicap" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
+                                    <td class="p-1 border-r"><asp:TextBox ID="h1_goal_handicap" data-line-picker="true" ReadOnly="true" role="combobox" aria-haspopup="listbox" aria-expanded="false" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
+                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_goal_handicap" data-line-picker="true" ReadOnly="true" role="combobox" aria-haspopup="listbox" aria-expanded="false" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
+                                    <td class="p-1"><asp:TextBox ID="h2_goal_handicap" data-line-picker="true" ReadOnly="true" role="combobox" aria-haspopup="listbox" aria-expanded="false" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
                                 </tr>
                                 <tr class="rate-row hidden">
                                     <td class="p-2 text-red-500 bg-gray-50/30 border-r text-right">Rate chủ</td>
@@ -241,9 +241,9 @@
 								
                                 <tr class="border-t-2">
                                     <td class="p-2 text-gray-500 bg-gray-50/30 border-r text-right">Tài góc</td>
-                                    <td class="p-1 border-r"><asp:TextBox ID="h1_conner_over_under" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
-                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_conner_over_under" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
-                                    <td class="p-1"><asp:TextBox ID="h2_conner_over_under" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
+                                    <td class="p-1 border-r"><asp:TextBox ID="h1_conner_over_under" data-line-picker="true" ReadOnly="true" role="combobox" aria-haspopup="listbox" aria-expanded="false" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
+                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_conner_over_under" data-line-picker="true" ReadOnly="true" role="combobox" aria-haspopup="listbox" aria-expanded="false" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
+                                    <td class="p-1"><asp:TextBox ID="h2_conner_over_under" data-line-picker="true" ReadOnly="true" role="combobox" aria-haspopup="listbox" aria-expanded="false" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
                                 </tr>
                                 <tr class="rate-row hidden">
                                     <td class="p-2 text-red-500 bg-gray-50/30 border-r text-right">Rate tài</td>
@@ -259,9 +259,9 @@
                                 </tr>
                                 <tr>
                                     <td class="p-2 text-gray-500 bg-gray-50/30 border-r text-right">Góc (chủ nhà)</td>
-                                    <td class="p-1 border-r"><asp:TextBox ID="h1_conner_handicap" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
-                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_conner_handicap" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
-                                    <td class="p-1"><asp:TextBox ID="h2_conner_handicap" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
+                                    <td class="p-1 border-r"><asp:TextBox ID="h1_conner_handicap" data-line-picker="true" ReadOnly="true" role="combobox" aria-haspopup="listbox" aria-expanded="false" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
+                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_conner_handicap" data-line-picker="true" ReadOnly="true" role="combobox" aria-haspopup="listbox" aria-expanded="false" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
+                                    <td class="p-1"><asp:TextBox ID="h2_conner_handicap" data-line-picker="true" ReadOnly="true" role="combobox" aria-haspopup="listbox" aria-expanded="false" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
                                 </tr>
                                 <tr class="rate-row hidden">
                                     <td class="p-2 text-red-500 bg-gray-50/30 border-r text-right">Rate chủ</td>
@@ -278,9 +278,9 @@
 								
 								<tr class="border-t-2">
                                     <td class="p-2 text-gray-500 bg-gray-50/30 border-r text-right">Tài thẻ</td>
-                                    <td class="p-1 border-r"><asp:TextBox ID="h1_card_over_under" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
-                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_card_over_under" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
-                                    <td class="p-1"><asp:TextBox ID="h2_card_over_under" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
+                                    <td class="p-1 border-r"><asp:TextBox ID="h1_card_over_under" data-line-picker="true" ReadOnly="true" role="combobox" aria-haspopup="listbox" aria-expanded="false" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
+                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_card_over_under" data-line-picker="true" ReadOnly="true" role="combobox" aria-haspopup="listbox" aria-expanded="false" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
+                                    <td class="p-1"><asp:TextBox ID="h2_card_over_under" data-line-picker="true" ReadOnly="true" role="combobox" aria-haspopup="listbox" aria-expanded="false" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
                                 </tr>
                                 <tr class="rate-row hidden">
                                     <td class="p-2 text-red-500 bg-gray-50/30 border-r text-right">Rate tài</td>
@@ -296,9 +296,9 @@
                                 </tr>
                                 <tr>
                                     <td class="p-2 text-gray-500 bg-gray-50/30 border-r text-right">Thẻ (chủ nhà)</td>
-                                    <td class="p-1 border-r"><asp:TextBox ID="h1_card_handicap" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
-                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_card_handicap" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
-                                    <td class="p-1"><asp:TextBox ID="h2_card_handicap" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
+                                    <td class="p-1 border-r"><asp:TextBox ID="h1_card_handicap" data-line-picker="true" ReadOnly="true" role="combobox" aria-haspopup="listbox" aria-expanded="false" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
+                                    <td class="p-1 border-r bg-blue-50/20"><asp:TextBox ID="ft_card_handicap" data-line-picker="true" ReadOnly="true" role="combobox" aria-haspopup="listbox" aria-expanded="false" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent text-blue-600" ></asp:TextBox></td>
+                                    <td class="p-1"><asp:TextBox ID="h2_card_handicap" data-line-picker="true" ReadOnly="true" role="combobox" aria-haspopup="listbox" aria-expanded="false" runat="server" onblur="formatDecimal(this)" class="w-full text-right py-1 outline-none bg-transparent" ></asp:TextBox></td>
                                 </tr>
                                 <tr class="rate-row hidden">
                                     <td class="p-2 text-red-500 bg-gray-50/30 border-r text-right">Rate chủ</td>
@@ -967,6 +967,7 @@
         let focusTimeout = null;
         
         document.addEventListener('focus', function(e) {
+            if (e.target.hasAttribute && e.target.hasAttribute('data-line-picker')) return;
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
                 lastFocusedElement = e.target;
                 
@@ -1030,3 +1031,5 @@
 
 </script>
 
+
+<script src="Scripts/bet-line-picker.js?v=20261117"></script>

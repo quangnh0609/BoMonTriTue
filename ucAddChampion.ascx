@@ -1,4 +1,4 @@
-﻿<%@ Control Language="C#" AutoEventWireup="true" %>
+<%@ Control Language="C#" AutoEventWireup="true" %>
 <%@ Register Src="~/ucNumericKeyboard.ascx" TagPrefix="uc" TagName="NumericKeyboard" %>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -818,3 +818,5 @@
         return false;
     }
 </script>
+
+<script src="Scripts/bet-line-picker.js?v=20261117"></script>

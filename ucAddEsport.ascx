@@ -1,4 +1,4 @@
-﻿<%@ Control Language="C#" AutoEventWireup="true" %>
+<%@ Control Language="C#" AutoEventWireup="true" %>
 <%@ Register Src="~/ucNumericKeyboard.ascx" TagPrefix="uc" TagName="NumericKeyboard" %>
 <%@ Import Namespace="System.Data" %>
 <%@ Import Namespace="System.Data.SqlClient" %>
@@ -110,27 +110,27 @@
                 <!-- Game 1 -->
                 <div class="game-panel" id="panel_g1">
                     <div class="grid grid-cols-3 gap-2 mb-3">
-                        <div><label class="keo-label block mb-1">Tài Kill</label><input type="text" id="g1_ou_line" class="keo-input" /></div>
+                        <div><label class="keo-label block mb-1">Tài Kill</label><input type="text" id="g1_ou_line" data-line-picker="true" readonly role="combobox" aria-haspopup="listbox" aria-expanded="false" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Tài</label><input type="text" id="g1_ou_over_win" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Xỉu</label><input type="text" id="g1_ou_under_win" class="keo-input" /></div>
                     </div>
                     <div class="grid grid-cols-3 gap-2 mb-3">
-                        <div><label class="keo-label block mb-1">Kill đội 1</label><input type="text" id="g1_hc_line" class="keo-input" /></div>
+                        <div><label class="keo-label block mb-1">Kill đội 1</label><input type="text" id="g1_hc_line" data-line-picker="true" readonly role="combobox" aria-haspopup="listbox" aria-expanded="false" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Đội 1</label><input type="text" id="g1_hc_home_win" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Đội 2</label><input type="text" id="g1_hc_way_win" class="keo-input" /></div>
                     </div>
                     <div class="grid grid-cols-3 gap-2 mb-3">
-                        <div><label class="keo-label block mb-1">Tài phút</label><input type="text" id="g1_minute_line" class="keo-input" /></div>
+                        <div><label class="keo-label block mb-1">Tài phút</label><input type="text" id="g1_minute_line" data-line-picker="true" readonly role="combobox" aria-haspopup="listbox" aria-expanded="false" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Tài</label><input type="text" id="g1_minute_over_win" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Xỉu</label><input type="text" id="g1_minute_under_win" class="keo-input" /></div>
                     </div>
                     <div class="grid grid-cols-3 gap-2 mb-3">
-                        <div><label class="keo-label block mb-1">Tài rồng</label><input type="text" id="g1_dragon_ou_line" class="keo-input" /></div>
+                        <div><label class="keo-label block mb-1">Tài rồng</label><input type="text" id="g1_dragon_ou_line" data-line-picker="true" readonly role="combobox" aria-haspopup="listbox" aria-expanded="false" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Tài</label><input type="text" id="g1_dragon_ou_over_win" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Xỉu</label><input type="text" id="g1_dragon_ou_under_win" class="keo-input" /></div>
                     </div>
                     <div class="grid grid-cols-3 gap-2 mb-3">
-                        <div><label class="keo-label block mb-1">Rồng đội 1</label><input type="text" id="g1_dragon_hc_line" class="keo-input" /></div>
+                        <div><label class="keo-label block mb-1">Rồng đội 1</label><input type="text" id="g1_dragon_hc_line" data-line-picker="true" readonly role="combobox" aria-haspopup="listbox" aria-expanded="false" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Đội 1</label><input type="text" id="g1_dragon_hc_home_win" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Đội 2</label><input type="text" id="g1_dragon_hc_way_win" class="keo-input" /></div>
                     </div>
@@ -157,27 +157,27 @@
                 <!-- Game 2 -->
                 <div class="game-panel" id="panel_g2">
                     <div class="grid grid-cols-3 gap-2 mb-3">
-                        <div><label class="keo-label block mb-1">Tài Kill</label><input type="text" id="g2_ou_line" class="keo-input" /></div>
+                        <div><label class="keo-label block mb-1">Tài Kill</label><input type="text" id="g2_ou_line" data-line-picker="true" readonly role="combobox" aria-haspopup="listbox" aria-expanded="false" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Tài</label><input type="text" id="g2_ou_over_win" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Xỉu</label><input type="text" id="g2_ou_under_win" class="keo-input" /></div>
                     </div>
                     <div class="grid grid-cols-3 gap-2 mb-3">
-                        <div><label class="keo-label block mb-1">Kill đội 1</label><input type="text" id="g2_hc_line" class="keo-input" /></div>
+                        <div><label class="keo-label block mb-1">Kill đội 1</label><input type="text" id="g2_hc_line" data-line-picker="true" readonly role="combobox" aria-haspopup="listbox" aria-expanded="false" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Đội 1</label><input type="text" id="g2_hc_home_win" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Đội 2</label><input type="text" id="g2_hc_way_win" class="keo-input" /></div>
                     </div>
                     <div class="grid grid-cols-3 gap-2 mb-3">
-                        <div><label class="keo-label block mb-1">Tài phút</label><input type="text" id="g2_minute_line" class="keo-input" /></div>
+                        <div><label class="keo-label block mb-1">Tài phút</label><input type="text" id="g2_minute_line" data-line-picker="true" readonly role="combobox" aria-haspopup="listbox" aria-expanded="false" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Tài</label><input type="text" id="g2_minute_over_win" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Xỉu</label><input type="text" id="g2_minute_under_win" class="keo-input" /></div>
                     </div>
                     <div class="grid grid-cols-3 gap-2 mb-3">
-                        <div><label class="keo-label block mb-1">Tài rồng</label><input type="text" id="g2_dragon_ou_line" class="keo-input" /></div>
+                        <div><label class="keo-label block mb-1">Tài rồng</label><input type="text" id="g2_dragon_ou_line" data-line-picker="true" readonly role="combobox" aria-haspopup="listbox" aria-expanded="false" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Tài</label><input type="text" id="g2_dragon_ou_over_win" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Xỉu</label><input type="text" id="g2_dragon_ou_under_win" class="keo-input" /></div>
                     </div>
                     <div class="grid grid-cols-3 gap-2 mb-3">
-                        <div><label class="keo-label block mb-1">Rồng đội 1</label><input type="text" id="g2_dragon_hc_line" class="keo-input" /></div>
+                        <div><label class="keo-label block mb-1">Rồng đội 1</label><input type="text" id="g2_dragon_hc_line" data-line-picker="true" readonly role="combobox" aria-haspopup="listbox" aria-expanded="false" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Đội 1</label><input type="text" id="g2_dragon_hc_home_win" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Đội 2</label><input type="text" id="g2_dragon_hc_way_win" class="keo-input" /></div>
                     </div>
@@ -204,27 +204,27 @@
                 <!-- Game 3 -->
                 <div class="game-panel" id="panel_g3">
                     <div class="grid grid-cols-3 gap-2 mb-3">
-                        <div><label class="keo-label block mb-1">Tài Kill</label><input type="text" id="g3_ou_line" class="keo-input" /></div>
+                        <div><label class="keo-label block mb-1">Tài Kill</label><input type="text" id="g3_ou_line" data-line-picker="true" readonly role="combobox" aria-haspopup="listbox" aria-expanded="false" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Tài</label><input type="text" id="g3_ou_over_win" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Xỉu</label><input type="text" id="g3_ou_under_win" class="keo-input" /></div>
                     </div>
                     <div class="grid grid-cols-3 gap-2 mb-3">
-                        <div><label class="keo-label block mb-1">Kill đội 1</label><input type="text" id="g3_hc_line" class="keo-input" /></div>
+                        <div><label class="keo-label block mb-1">Kill đội 1</label><input type="text" id="g3_hc_line" data-line-picker="true" readonly role="combobox" aria-haspopup="listbox" aria-expanded="false" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Đội 1</label><input type="text" id="g3_hc_home_win" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Đội 2</label><input type="text" id="g3_hc_way_win" class="keo-input" /></div>
                     </div>
                     <div class="grid grid-cols-3 gap-2 mb-3">
-                        <div><label class="keo-label block mb-1">Tài phút</label><input type="text" id="g3_minute_line" class="keo-input" /></div>
+                        <div><label class="keo-label block mb-1">Tài phút</label><input type="text" id="g3_minute_line" data-line-picker="true" readonly role="combobox" aria-haspopup="listbox" aria-expanded="false" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Tài</label><input type="text" id="g3_minute_over_win" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Xỉu</label><input type="text" id="g3_minute_under_win" class="keo-input" /></div>
                     </div>
                     <div class="grid grid-cols-3 gap-2 mb-3">
-                        <div><label class="keo-label block mb-1">Tài rồng</label><input type="text" id="g3_dragon_ou_line" class="keo-input" /></div>
+                        <div><label class="keo-label block mb-1">Tài rồng</label><input type="text" id="g3_dragon_ou_line" data-line-picker="true" readonly role="combobox" aria-haspopup="listbox" aria-expanded="false" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Tài</label><input type="text" id="g3_dragon_ou_over_win" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Xỉu</label><input type="text" id="g3_dragon_ou_under_win" class="keo-input" /></div>
                     </div>
                     <div class="grid grid-cols-3 gap-2 mb-3">
-                        <div><label class="keo-label block mb-1">Rồng đội 1</label><input type="text" id="g3_dragon_hc_line" class="keo-input" /></div>
+                        <div><label class="keo-label block mb-1">Rồng đội 1</label><input type="text" id="g3_dragon_hc_line" data-line-picker="true" readonly role="combobox" aria-haspopup="listbox" aria-expanded="false" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Đội 1</label><input type="text" id="g3_dragon_hc_home_win" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Đội 2</label><input type="text" id="g3_dragon_hc_way_win" class="keo-input" /></div>
                     </div>
@@ -251,27 +251,27 @@
                 <!-- Game 4 -->
                 <div class="game-panel" id="panel_g4">
                     <div class="grid grid-cols-3 gap-2 mb-3">
-                        <div><label class="keo-label block mb-1">Tài Kill</label><input type="text" id="g4_ou_line" class="keo-input" /></div>
+                        <div><label class="keo-label block mb-1">Tài Kill</label><input type="text" id="g4_ou_line" data-line-picker="true" readonly role="combobox" aria-haspopup="listbox" aria-expanded="false" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Tài</label><input type="text" id="g4_ou_over_win" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Xỉu</label><input type="text" id="g4_ou_under_win" class="keo-input" /></div>
                     </div>
                     <div class="grid grid-cols-3 gap-2 mb-3">
-                        <div><label class="keo-label block mb-1">Kill đội 1</label><input type="text" id="g4_hc_line" class="keo-input" /></div>
+                        <div><label class="keo-label block mb-1">Kill đội 1</label><input type="text" id="g4_hc_line" data-line-picker="true" readonly role="combobox" aria-haspopup="listbox" aria-expanded="false" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Đội 1</label><input type="text" id="g4_hc_home_win" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Đội 2</label><input type="text" id="g4_hc_way_win" class="keo-input" /></div>
                     </div>
                     <div class="grid grid-cols-3 gap-2 mb-3">
-                        <div><label class="keo-label block mb-1">Tài phút</label><input type="text" id="g4_minute_line" class="keo-input" /></div>
+                        <div><label class="keo-label block mb-1">Tài phút</label><input type="text" id="g4_minute_line" data-line-picker="true" readonly role="combobox" aria-haspopup="listbox" aria-expanded="false" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Tài</label><input type="text" id="g4_minute_over_win" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Xỉu</label><input type="text" id="g4_minute_under_win" class="keo-input" /></div>
                     </div>
                     <div class="grid grid-cols-3 gap-2 mb-3">
-                        <div><label class="keo-label block mb-1">Tài rồng</label><input type="text" id="g4_dragon_ou_line" class="keo-input" /></div>
+                        <div><label class="keo-label block mb-1">Tài rồng</label><input type="text" id="g4_dragon_ou_line" data-line-picker="true" readonly role="combobox" aria-haspopup="listbox" aria-expanded="false" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Tài</label><input type="text" id="g4_dragon_ou_over_win" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Xỉu</label><input type="text" id="g4_dragon_ou_under_win" class="keo-input" /></div>
                     </div>
                     <div class="grid grid-cols-3 gap-2 mb-3">
-                        <div><label class="keo-label block mb-1">Rồng đội 1</label><input type="text" id="g4_dragon_hc_line" class="keo-input" /></div>
+                        <div><label class="keo-label block mb-1">Rồng đội 1</label><input type="text" id="g4_dragon_hc_line" data-line-picker="true" readonly role="combobox" aria-haspopup="listbox" aria-expanded="false" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Đội 1</label><input type="text" id="g4_dragon_hc_home_win" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Đội 2</label><input type="text" id="g4_dragon_hc_way_win" class="keo-input" /></div>
                     </div>
@@ -297,27 +297,27 @@
                 <!-- Game 5 -->
                 <div class="game-panel" id="panel_g5">
                     <div class="grid grid-cols-3 gap-2 mb-3">
-                        <div><label class="keo-label block mb-1">Tài Kill</label><input type="text" id="g5_ou_line" class="keo-input" /></div>
+                        <div><label class="keo-label block mb-1">Tài Kill</label><input type="text" id="g5_ou_line" data-line-picker="true" readonly role="combobox" aria-haspopup="listbox" aria-expanded="false" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Tài</label><input type="text" id="g5_ou_over_win" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Xỉu</label><input type="text" id="g5_ou_under_win" class="keo-input" /></div>
                     </div>
                     <div class="grid grid-cols-3 gap-2 mb-3">
-                        <div><label class="keo-label block mb-1">Kill đội 1</label><input type="text" id="g5_hc_line" class="keo-input" /></div>
+                        <div><label class="keo-label block mb-1">Kill đội 1</label><input type="text" id="g5_hc_line" data-line-picker="true" readonly role="combobox" aria-haspopup="listbox" aria-expanded="false" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Đội 1</label><input type="text" id="g5_hc_home_win" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Đội 2</label><input type="text" id="g5_hc_way_win" class="keo-input" /></div>
                     </div>
                     <div class="grid grid-cols-3 gap-2 mb-3">
-                        <div><label class="keo-label block mb-1">Tài phút</label><input type="text" id="g5_minute_line" class="keo-input" /></div>
+                        <div><label class="keo-label block mb-1">Tài phút</label><input type="text" id="g5_minute_line" data-line-picker="true" readonly role="combobox" aria-haspopup="listbox" aria-expanded="false" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Tài</label><input type="text" id="g5_minute_over_win" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Xỉu</label><input type="text" id="g5_minute_under_win" class="keo-input" /></div>
                     </div>
                     <div class="grid grid-cols-3 gap-2 mb-3">
-                        <div><label class="keo-label block mb-1">Tài rồng</label><input type="text" id="g5_dragon_ou_line" class="keo-input" /></div>
+                        <div><label class="keo-label block mb-1">Tài rồng</label><input type="text" id="g5_dragon_ou_line" data-line-picker="true" readonly role="combobox" aria-haspopup="listbox" aria-expanded="false" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Tài</label><input type="text" id="g5_dragon_ou_over_win" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Xỉu</label><input type="text" id="g5_dragon_ou_under_win" class="keo-input" /></div>
                     </div>
                     <div class="grid grid-cols-3 gap-2 mb-3">
-                        <div><label class="keo-label block mb-1">Rồng đội 1</label><input type="text" id="g5_dragon_hc_line" class="keo-input" /></div>
+                        <div><label class="keo-label block mb-1">Rồng đội 1</label><input type="text" id="g5_dragon_hc_line" data-line-picker="true" readonly role="combobox" aria-haspopup="listbox" aria-expanded="false" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Đội 1</label><input type="text" id="g5_dragon_hc_home_win" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Đội 2</label><input type="text" id="g5_dragon_hc_way_win" class="keo-input" /></div>
                     </div>
@@ -343,12 +343,12 @@
                 <!-- BO x -->
                 <div class="game-panel active" id="panel_g6">
                     <div class="grid grid-cols-3 gap-2 mb-3">
-                        <div><label class="keo-label block mb-1">Tài game</label><input type="text" id="g6_ou_line" class="keo-input" /></div>
+                        <div><label class="keo-label block mb-1">Tài game</label><input type="text" id="g6_ou_line" data-line-picker="true" readonly role="combobox" aria-haspopup="listbox" aria-expanded="false" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Tài</label><input type="text" id="g6_ou_over_win" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Xỉu</label><input type="text" id="g6_ou_under_win" class="keo-input" /></div>
                     </div>
                     <div class="grid grid-cols-3 gap-2 mb-3">
-                        <div><label class="keo-label block mb-1">Game đội 1</label><input type="text" id="g6_hc_line" class="keo-input" /></div>
+                        <div><label class="keo-label block mb-1">Game đội 1</label><input type="text" id="g6_hc_line" data-line-picker="true" readonly role="combobox" aria-haspopup="listbox" aria-expanded="false" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Đội 1</label><input type="text" id="g6_hc_home_win" class="keo-input" /></div>
                         <div class="esport-rate-field hidden"><label class="keo-label block mb-1">Rate Đội 2</label><input type="text" id="g6_hc_way_win" class="keo-input" /></div>
                     </div>
@@ -763,3 +763,5 @@
 
 
 
+
+<script src="Scripts/bet-line-picker.js?v=20261117"></script>

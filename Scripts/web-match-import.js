@@ -290,6 +290,10 @@
                     const input = document.createElement('input'); input.type = 'text'; input.inputMode = property === 'Line' && ['1', '3', '6', '7'].includes(type) ? 'text' : 'decimal'; input.autocomplete = 'off'; input.maxLength = 24;
                     input.className = 'w-full min-w-0 p-2 text-right bg-transparent outline-none focus:bg-white focus:ring-1 focus:ring-blue-400'; input.value = item[property];
                     input.dataset.fixture = m.Id; input.dataset.code = item.Code; input.dataset.field = property;
+                    if (property === 'Line' && type !== '7') {
+                        input.setAttribute('data-line-picker', 'true'); input.readOnly = true; input.inputMode = 'none';
+                        window.BetLinePicker.prepare(input);
+                    }
                     input.setAttribute('aria-label', m.Home + ' – ' + m.Away + ': ' + label + ' ' + (period === '1' ? 'H1' : 'FT'));
                     input.oninput = () => { item[property] = input.value; };
                     td.appendChild(input);
