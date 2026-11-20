@@ -56,6 +56,10 @@ const flush = () => new Promise(resolve => setImmediate(resolve));
     assert((await rejected(context.window.testApi({action:'create'}))).message.includes('Kiểm tra danh sách'));
     assert.equal(calls.filter(call=>call.payload.action==='create').length,1);
 
+    responses([new Error('network'), {ok:false,code:'WEB_MATCH_OPERATION_MISSING'}]);
+    assert((await rejected(context.window.testApi({action:'importResults',ids:['one']}))).message.includes('Kiểm tra danh sách'));
+    assert.deepEqual(calls.map(call=>call.payload.action),['importResults','status'],'Never replay an uncertain result update');
+
     responses([new Error('not received'), {ok:false,code:'WEB_MATCH_OPERATION_MISSING'}, {ok:true,snapshot:'new'}]);
     result = await context.window.testApi({action:'search',dates:['2026-11-14']});
     assert.equal(result.snapshot,'new');

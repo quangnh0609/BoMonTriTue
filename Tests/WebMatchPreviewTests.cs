@@ -25,6 +25,7 @@ public static class WebMatchPreviewTests
     }
     public static void Main()
     {
+        CheckImportedResults();
         var page = new WebMatchesPreviewHarness();
         var state = new WebMatchState("test-token");
         page.GetType().GetField("importState", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(page, state);
@@ -71,6 +72,47 @@ public static class WebMatchPreviewTests
         page.GetType().GetField("source", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(page, "the-odds-api");
         input.Remove("previewToken");
         Reject(page, input, "DATABASE_REACHED");
-        Console.WriteLine(count + " preview/backend guard assertions passed.");
+        Console.WriteLine(count + " preview and result-import assertions passed.");
+    }
+
+    static object Json(string value)
+    {
+        return new System.Web.Script.Serialization.JavaScriptSerializer().DeserializeObject(value.Replace('\'', '"'));
+    }
+
+    static void CheckImportedResults()
+    {
+        var row = WebMatchImport.Obj(Json(@"{
+            'fixture':{'id':123,'date':'2026-11-20T18:00:00Z','status':{'short':'PEN'}},
+            'league':{'id':2,'name':'Champions League','season':2026},
+            'teams':{'home':{'id':10,'name':'Home'},'away':{'id':20,'name':'Away'}},
+            'score':{'halftime':{'home':0,'away':null},'fulltime':{'home':1,'away':1},
+                     'extratime':{'home':2,'away':2},'penalty':{'home':5,'away':4}}
+        }"));
+        var match = ApiFootballImport.ReadFixture(row);
+        Check(ApiFootballImport.ParseFixture(row) == null && match.Id == "123", "Completed fixtures are usable for results and excluded from odds");
+        Check(ApiFootballImport.LocalMatchId(match.Id) == WebMatchImport.CompactId("OM", "api-football:123"), "Historical imported ID is retained");
+        var local = new ApiFootballResults.LocalMatch { Home = "home", Away = "Away", League = "Champions League", Kickoff = new DateTime(2026, 11, 21, 1, 0, 0) };
+        Check(ApiFootballResults.IsSameMatch(local, match), "Matching manually created fixtures uses UTC+7 and both teams");
+        local.League = "Different league";
+        Check(!ApiFootballResults.IsSameMatch(local, match), "Same teams and kickoff in a different league do not match");
+
+        var results = ApiFootballResults.ReadScore(row);
+        Check((int)results["ft_goal_home"] == 1 && (int)results["ft_goal_way"] == 1, "Regular-time score excludes extra time and penalties");
+        Check(!results.ContainsKey("h1_goal_home"), "A missing side never becomes zero or a partial pair");
+        var stats = WebMatchImport.Rows(Json(@"[
+          {'team':{'id':20},
+           'statistics':[{'type':'Corner Kicks','value':10}],
+           'statistics_1h':[{'type':'Corner Kicks','value':0},{'type':'Yellow Cards','value':2},{'type':'Red Cards','value':1}],
+           'statistics_2h':[{'type':'Corner Kicks','value':5}]},
+          {'team':{'id':10},
+           'statistics':[{'type':'Corner Kicks','value':9}],
+           'statistics_1h':[{'type':'Corner Kicks','value':2},{'type':'Yellow Cards','value':1},{'type':'Red Cards','value':0}],
+           'statistics_2h':[{'type':'Corner Kicks','value':4}]}
+        ]"));
+        ApiFootballResults.AddStatistics(results, stats, match, "PEN");
+        Check((int)results["h1_conner_home"] == 2 && (int)results["h1_conner_way"] == 0, "Stats follow team IDs and preserve zero");
+        Check((int)results["ft_conner_home"] == 6 && (int)results["ft_conner_way"] == 5, "Extra-time fixture uses only regulation halves for corners");
+        Check(!results.ContainsKey("h1_card_home"), "Card results requiring a red-card rule remain manual");
     }
 }

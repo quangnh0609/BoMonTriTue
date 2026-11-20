@@ -120,9 +120,27 @@ public static class ApiFootballImport
     }
     public static WebMatchImport.Fixture ParseFixture(Dictionary<string, object> row)
     {
+        if (FixtureStatus(row) != "NS") return null;
+        return ReadFixture(row);
+    }
+
+    public static string FixtureStatus(Dictionary<string, object> row)
+    {
         var fixture = WebMatchImport.Obj(row["fixture"]);
-        var status = WebMatchImport.Obj(fixture["status"]);
-        if (WebMatchImport.Str(status, "short") != "NS") return null;
+        return WebMatchImport.Str(WebMatchImport.Obj(fixture["status"]), "short");
+    }
+
+    public static string LocalMatchId(string fixtureId)
+    {
+        return WebMatchImport.CompactId("OM", "api-football:" + fixtureId);
+    }
+
+    public static WebMatchImport.Fixture ReadFixture(Dictionary<string, object> row)
+    {
+        var fixture = WebMatchImport.Obj(row["fixture"]);
+        DateTimeOffset kickoff;
+        if (!DateTimeOffset.TryParse(WebMatchImport.Str(fixture, "date"), CultureInfo.InvariantCulture, DateTimeStyles.None, out kickoff))
+            return null;
         var league = WebMatchImport.Obj(row["league"]);
         var teams = WebMatchImport.Obj(row["teams"]);
         var home = WebMatchImport.Obj(teams["home"]); var away = WebMatchImport.Obj(teams["away"]);
@@ -131,19 +149,24 @@ public static class ApiFootballImport
             League = WebMatchImport.Str(league, "name"), Season = WebMatchImport.Str(league, "season"),
             Home = WebMatchImport.Str(home, "name"), Away = WebMatchImport.Str(away, "name"),
             HomeId = WebMatchImport.Str(home, "id"), AwayId = WebMatchImport.Str(away, "id"),
-            Kickoff = DateTimeOffset.Parse(WebMatchImport.Str(fixture, "date"), CultureInfo.InvariantCulture)
+            Kickoff = kickoff
         };
     }
     public static Dictionary<string, WebMatchImport.Fixture> Search(List<DateTime> dates, string league)
     {
         var result = new Dictionary<string, WebMatchImport.Fixture>();
         foreach (DateTime date in dates)
-        foreach (var row in WebMatchImport.Rows(Get("fixtures?date=" + date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + "&timezone=Asia%2FBangkok", 120)["response"]))
+        foreach (var row in FixturesOn(date))
         {
             var f = ParseFixture(row);
             if (f != null && f.LeagueId == league && dates.Contains(f.Kickoff.ToOffset(TimeSpan.FromHours(7)).Date) && f.Kickoff > DateTimeOffset.UtcNow) result[f.Id] = f;
         }
         return result;
+    }
+
+    public static IEnumerable<Dictionary<string, object>> FixturesOn(DateTime date)
+    {
+        return WebMatchImport.Rows(Get("fixtures?date=" + date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + "&timezone=Asia%2FBangkok", 120)["response"]);
     }
     public static List<WebMatchImport.Market> LoadMarkets(WebMatchImport.Fixture fixture)
     {

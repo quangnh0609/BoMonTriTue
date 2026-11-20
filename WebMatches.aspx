@@ -13,7 +13,7 @@
     string OperationScope { get { return Session.SessionID + ":" + currentUserId.ToString(CultureInfo.InvariantCulture); } }
     private string source = "the-odds-api";
     bool AllowedLeague(string league) { return source == "api-football" ? ApiFootballImport.GetLeagues().Any(l => l.id == league) : WebMatchImport.IsAllowedLeague(league); }
-    string MatchId(WebMatchImport.Fixture fixture) { return WebMatchImport.CompactId("OM", fixture.Source == "api-football" ? "api-football:" + fixture.Id : fixture.Id); }
+    string MatchId(WebMatchImport.Fixture fixture) { return fixture.Source == "api-football" ? ApiFootballImport.LocalMatchId(fixture.Id) : WebMatchImport.CompactId("OM", fixture.Id); }
     string Connection { get { return ConfigurationManager.ConnectionStrings["MyDbConn"].ConnectionString; } }
     void Reply(object value)
     {
@@ -61,13 +61,6 @@
                 Response.TrySkipIisCustomErrors = true;
                 throw new InvalidOperationException("Chỉ admin được sử dụng chức năng Lấy từ web.");
             }
-            using (var conn = new SqlConnection(Connection))
-            using (var cmd = new SqlCommand("SELECT dbo.bet_check_right(@id, 'bet_match_insert')", conn))
-            {
-                conn.Open(); cmd.Parameters.AddWithValue("@id", currentUserId);
-                string allowed = Convert.ToString(cmd.ExecuteScalar());
-                if (allowed != "1" && !allowed.Equals("true", StringComparison.OrdinalIgnoreCase)) { Response.StatusCode = 403; throw new InvalidOperationException("Bạn không có quyền tạo trận đấu."); }
-            }
             // A restored FormsAuth login can have a new session while the page still holds its old token.
             // Same-origin JSON GET exposes no data to other origins and performs no import operation.
             if (Request.HttpMethod == "GET" && Request.QueryString["action"] == "token")
@@ -94,7 +87,10 @@
                 if (saved == null) { Reply(new { ok = false, code = "WEB_MATCH_OPERATION_MISSING", message = "Không tìm thấy lượt xử lý trước đó. Dữ liệu có thể đã hết hạn hoặc máy chủ vừa khởi động lại." }); return; }
                 ReplyOperation(saved); return;
             }
-            if (action != "leagues" && action != "search" && action != "preview" && action != "create") throw new InvalidOperationException("Thao tác không hợp lệ.");
+            bool resultAction = action == "listResults" || action == "importResults";
+            if (!resultAction && action != "leagues" && action != "search" && action != "preview" && action != "create") throw new InvalidOperationException("Thao tác không hợp lệ.");
+            if (resultAction && source != "api-football") throw new InvalidOperationException("Lấy kết quả sử dụng API-Football.");
+            CheckImportRight(resultAction);
             string operationId = WebMatchImport.Str(input, "operationId");
             if (operationId != "")
             {
@@ -112,8 +108,24 @@
                 if (source == "the-odds-api") { try { WebMatchImport.CachedGet("sports/", 120); } catch (InvalidOperationException) { } }
                 Reply(new { ok = true, leagues = leagues }); return;
             }
+            if (action == "listResults")
+            {
+                using (var conn = new SqlConnection(Connection))
+                {
+                    conn.Open();
+                    var matches = ApiFootballResults.List(conn, null, null);
+                    Reply(new { ok = true, matches = matches.Select(m => new { m.Id, m.Name, m.Time, m.Status }).ToList() });
+                }
+                return;
+            }
             lock (importState.SyncRoot)
             {
+                if (action == "importResults")
+                {
+                    var outcomes = ApiFootballResults.Import(Connection, currentUserId, WebMatchImport.SelectedIds(input));
+                    Reply(new { ok = true, outcomes = outcomes });
+                    return;
+                }
                 if (action == "search") { Search(input); return; }
                 if (action == "preview") { Preview(input); return; }
                 if (action == "create") { Create(input); return; }
@@ -122,6 +134,23 @@
         }
         catch (InvalidOperationException ex) { Reply(new { ok = false, message = ex.Message }); }
         catch (Exception ex) { System.Diagnostics.Trace.TraceError("Web match import: {0}", ex); Reply(new { ok = false, message = "Không thể xử lý dữ liệu. Vui lòng thử lại hoặc liên hệ quản trị viên." }); }
+    }
+    void CheckImportRight(bool resultAction)
+    {
+        using (var conn = new SqlConnection(Connection))
+        using (var cmd = new SqlCommand("SELECT dbo.bet_check_right(@id, @action)", conn))
+        {
+            cmd.Parameters.AddWithValue("@id", currentUserId);
+            cmd.Parameters.AddWithValue("@action", resultAction ? "bet_match_result" : "bet_match_insert");
+            conn.Open();
+            string allowed = Convert.ToString(cmd.ExecuteScalar());
+            if (allowed != "1" && !allowed.Equals("true", StringComparison.OrdinalIgnoreCase))
+            {
+                Response.StatusCode = 403;
+                Response.TrySkipIisCustomErrors = true;
+                throw new InvalidOperationException(resultAction ? "Bạn không có quyền cập nhật kết quả." : "Bạn không có quyền tạo trận đấu.");
+            }
+        }
     }
     void ReplyOperation(WebMatchOperations.Operation operation)
     {

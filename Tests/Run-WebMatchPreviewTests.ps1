@@ -11,7 +11,7 @@ $sourcePath = Join-Path $env:TEMP ('WebMatchPreview-' + [Guid]::NewGuid().ToStri
 [IO.File]::WriteAllText($sourcePath, $harness)
 $exePath = $sourcePath + '.exe'
 $outputArgument = '/out:' + $exePath
-& "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe" /nologo /target:exe $outputArgument /r:System.Web.dll /r:System.Web.Extensions.dll /r:System.Configuration.dll /r:System.Data.dll $sourcePath (Join-Path $programRoot 'App_Code\WebMatchImport.cs') (Join-Path $programRoot 'App_Code\ApiFootballImport.cs') (Join-Path $programRoot 'App_Code\CatalogState.cs') (Join-Path $programRoot 'App_Code\WebMatchEdits.cs') (Join-Path $programRoot 'App_Code\WebMatchOperations.cs') (Join-Path $programRoot 'App_Code\WebMatchState.cs') (Join-Path $PSScriptRoot 'WebMatchPreviewTests.cs')
+& "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe" /nologo /target:exe $outputArgument /r:System.Web.dll /r:System.Web.Extensions.dll /r:System.Configuration.dll /r:System.Data.dll $sourcePath (Join-Path $programRoot 'App_Code\WebMatchImport.cs') (Join-Path $programRoot 'App_Code\ApiFootballImport.cs') (Join-Path $programRoot 'App_Code\ApiFootballResults.cs') (Join-Path $programRoot 'App_Code\MatchResultSave.cs') (Join-Path $programRoot 'App_Code\CatalogState.cs') (Join-Path $programRoot 'App_Code\WebMatchEdits.cs') (Join-Path $programRoot 'App_Code\WebMatchOperations.cs') (Join-Path $programRoot 'App_Code\WebMatchState.cs') (Join-Path $PSScriptRoot 'WebMatchPreviewTests.cs')
 if ($LASTEXITCODE -ne 0) { throw 'Preview test compilation failed.' }
 & $exePath
 if ($LASTEXITCODE -ne 0) { throw 'Preview tests failed.' }

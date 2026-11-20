@@ -2,6 +2,8 @@ const fs = require('fs');
 const vm = require('vm');
 const assert = require('assert');
 const path = require('path');
+const testSource = process.env.WEB_MATCH_TEST_SOURCE || 'api-football';
+const testSourceSelector = testSource === 'the-odds-api';
 
 // Exercise the create -> resolve missing teams -> explicit choice -> create flow.
 class Element {
@@ -17,7 +19,7 @@ class Element {
     focus() {}
     get options() { return this.children; }
     querySelector() { return new Element(); }
-    querySelectorAll(selector) { return this.id === 'webMatchList' && selector.startsWith('input') ? (process.env.WEB_MATCH_TEST_SOURCE === 'api-football' ? ['fixture-one','fixture-two'] : ['fixture-one']).map(value => ({value,checked:true})) : []; }
+    querySelectorAll(selector) { return this.id === 'webMatchList' && selector.startsWith('input') ? selectedIds.map(value => ({value,checked:true})) : []; }
 }
 const elements = new Map();
 const el = id => { if (!elements.has(id)) elements.set(id, new Element(id)); return elements.get(id); };
@@ -25,10 +27,11 @@ const dialogHtml = fs.readFileSync(path.join(__dirname, '../WebMatchDialogs.html
 for (const id of ['webMatchSource','webMatchSourceOdds','webMatchSourceFootball','webMatchSourceClose','webMatchChangeSource','webMatchSourceNote']) assert(dialogHtml.includes('id="' + id + '"'), 'Source UI must exist: ' + id);
 const requests = [];
 let reloads = 0;
+let matchRefreshes = 0;
 const kind = process.env.WEB_MATCH_TEST_KIND || 'đội';
 const context = {
     document: { getElementById: el, createElement: () => new Element(), body: { style: {} }, addEventListener() {} },
-    window: { BetLinePicker: { prepare() {} }, webMatchToken: 'token', location: { reload() { reloads++; } } },
+    window: { BetLinePicker: { prepare() {} }, webMatchToken: 'token', location: { reload() { reloads++; } }, reloadMatchesData() { matchRefreshes++; } },
     fetch: async (_, request) => {
         const data = JSON.parse(request.body); requests.push(data);
         return { json: async () => data.teamChoices.sourceTeam ? { ok: true, count: 1 } : {
@@ -37,14 +40,24 @@ const context = {
     }
 };
 vm.createContext(context);
-vm.runInContext(fs.readFileSync(path.join(__dirname, '../Scripts/web-match-import.js'), 'utf8'), context);
+const script = fs.readFileSync(path.join(__dirname, '../Scripts/web-match-import.js'), 'utf8');
+vm.runInContext(testSourceSelector ? script.replace('const allowSourceSelection = false;', 'const allowSourceSelection = true;') : script, context);
 
 
-const selectedIds = process.env.WEB_MATCH_TEST_SOURCE === 'api-football' ? ['fixture-one', 'fixture-two'] : ['fixture-one'];
+const selectedIds = testSourceSelector ? ['fixture-one'] : ['fixture-one', 'fixture-two'];
 context.fetch = async (_, request) => {
     const data = JSON.parse(request.body); requests.push(data);
     return { json: async () => {
         if (data.action === 'leagues') return {ok:true,leagues:[]};
+        if (data.action === 'listResults') return {ok:true,matches:[
+            {Id:'live',Name:'Home – Away',Time:'20:00 31/12/2026',Status:'Trực tiếp'},
+            {Id:'pending',Name:'Blue – Red',Time:'18:00 31/12/2026',Status:'Chờ kết quả'},
+            {Id:'other',Name:'Black – White',Time:'17:00 31/12/2026',Status:'Chờ kết quả'}
+        ]};
+        if (data.action === 'importResults') return {ok:true,outcomes:[
+            {Id:'live',Updated:false,Message:'Trận chưa kết thúc.'},
+            {Id:'pending',Updated:true,Message:'Đã lưu bàn cả trận 2–0.'}
+        ]};
         if (data.action === 'search') return {ok:true,snapshot:'selection',matches:selectedIds.map((id,i) => ({Id:id,Time:'20:00 31/12/2026',Home:'Home'+i,Away:'Away'+i}))};
         if (data.action === 'preview') return {ok:true,previewToken:'preview-one',matches:selectedIds.map((id,i)=>({Id:id,Time:'20:00 31/12/2026',Home:'Home'+i,Away:'Away'+i,Markets:[
             {Code:'33',Line:0.5,Home:0.9,Away:0.9,Bookmaker:'Book A'},
@@ -57,9 +70,21 @@ context.fetch = async (_, request) => {
     }};
 };
 (async () => {
-    await context.window.webMatchOpen();
-    assert.equal(requests.length, 0, "Opening source selector must not call either API");
-    await el(process.env.WEB_MATCH_TEST_SOURCE === "api-football" ? "webMatchSourceFootball" : "webMatchSourceOdds").onclick();
+    context.window.webMatchOpen();
+    assert(!el('webMatchMode').classList.contains('hidden'));
+    assert.equal(requests.length, 0, 'The mode chooser does not call the server');
+    await el('webMatchModeOdds').onclick();
+    if (testSourceSelector) {
+        assert.equal(requests.length, 0, 'Opening the source selector does not call either API');
+        await el('webMatchSourceOdds').onclick();
+    } else {
+        assert(/id="webMatchChangeSource"[^>]*class="hidden\b/.test(dialogHtml));
+        assert(el('webMatchSource').classList.contains('hidden'));
+        assert(el('webMatchChangeSource').classList.contains('hidden'));
+        assert(!el('webMatchFilter').classList.contains('hidden'));
+        assert.equal(requests[0].source, 'api-football');
+        assert.equal(requests[0].action, 'leagues');
+    }
     el('webMatchLeague').value='soccer_epl';
     const first=el('webMatchDays').children[0].dataset.day;
     const third=el('webMatchDays').children[2].dataset.day;
@@ -70,7 +95,7 @@ context.fetch = async (_, request) => {
     assert(el('webMatchList').children[0].children[0].children[1].textContent.includes('31/12/2026'),'Show date as well as time');
     await el('webMatchCreate').onclick();
     let createIndex = 2;
-    if (process.env.WEB_MATCH_TEST_SOURCE === 'api-football') {
+    if (!testSourceSelector) {
         assert.equal(requests[2].action,'preview');
         assert.equal(reloads,0,'Preview must not create matches');
         assert.equal(el('webMatchPreview').classList.contains('hidden'),false);
@@ -110,16 +135,46 @@ context.fetch = async (_, request) => {
     assert.equal(requests[createIndex].action,'create');
     assert.deepEqual(requests[createIndex].ids,selectedIds);
     assert.equal(requests[createIndex].snapshot,'selection');
-    assert(requests.every(r => r.source === (process.env.WEB_MATCH_TEST_SOURCE || 'the-odds-api')), 'Keep chosen source on every request');
+    assert(requests.every(r => r.source === testSource), 'Keep the same source on every request');
     const requestCount = requests.length;
     el('webMatchBack').onclick();
     el('webMatchDays').children[0].onclick();
     el('webMatchDays').children[2].onclick();
     await el('webMatchSearch').onclick();
     assert.equal(requests.length,requestCount,'Empty day selection must not send a request');
-    el('webMatchChangeSource').onclick();
-    await el('webMatchSourceFootball').onclick();
+    if (testSourceSelector) {
+        el('webMatchChangeSource').onclick();
+        await el('webMatchSourceFootball').onclick();
+    } else {
+        context.window.webMatchOpen();
+        await el('webMatchModeOdds').onclick();
+    }
     assert.equal(requests[requestCount].source, 'api-football');
-    assert.equal(el('webMatchList').children.length,0,'Switching source clears old selection');
+    assert.equal(el('webMatchList').children.length,0,'Opening the filter clears old selection');
+    context.window.webMatchOpen();
+    await el('webMatchModeResults').onclick();
+    assert(!el('webMatchScore').classList.contains('hidden'));
+    assert.equal(requests.at(-1).action, 'listResults');
+    assert.equal(requests.at(-1).source, 'api-football');
+    assert(el('webMatchScoreImport').disabled);
+    const [live, pending, other] = el('webMatchScoreList').children;
+    assert(live.children[0].children[1].textContent.includes('Trực tiếp'));
+    assert(pending.children[0].children[1].textContent.includes('Chờ kết quả'));
+    for (const row of [live, pending]) {
+        const check = row.children[0].children[0];
+        check.checked = true;
+        check.onchange();
+    }
+    assert(!el('webMatchScoreImport').disabled);
+    await el('webMatchScoreImport').onclick();
+    assert.equal(requests.at(-1).action, 'importResults');
+    assert.deepEqual(requests.at(-1).ids, ['live', 'pending']);
+    assert.equal(live.children[1].textContent, 'Trận chưa kết thúc.');
+    assert.equal(pending.children[1].textContent, 'Đã lưu bàn cả trận 2–0.');
+    assert(!other.children[1].textContent);
+    assert.equal(matchRefreshes, 1);
+    assert(el('webMatchScoreImport').disabled);
+    el('webMatchScoreBack').onclick();
+    assert(!el('webMatchMode').classList.contains('hidden'));
     console.log('Multiple day selection and list-first flow checks passed.');
 })().catch(error => {console.error(error);process.exitCode=1;});

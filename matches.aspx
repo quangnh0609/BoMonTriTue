@@ -323,12 +323,8 @@
 		while (reader.Read())
 		{
 			string code = reader["code"] == DBNull.Value ? "" : reader["code"].ToString().Trim();
-			if (code == "01" || code == "11") fields["h1_conner"] = true;
-			if (code == "02" || code == "12" || code == "03" || code == "13") fields["ft_conner"] = true;
-			if (code == "21" || code == "31" || code == "41") fields["h1_goal"] = true;
-			if (code == "22" || code == "32" || code == "23" || code == "33" || code == "42" || code == "43") fields["ft_goal"] = true;
-			if (code == "51" || code == "61") fields["h1_card"] = true;
-			if (code == "52" || code == "62" || code == "53" || code == "63") fields["ft_card"] = true;
+			foreach (var market in MatchResultSave.Markets)
+				if (Array.IndexOf(market.Value, code) >= 0) fields[market.Key] = true;
 			if (code == "71") fields["serve"] = true;
 		}
 		reader.Close();
@@ -356,59 +352,9 @@
 			string connStr = ConfigurationManager.ConnectionStrings["MyDbConn"].ConnectionString;
 			using (SqlConnection conn = new SqlConnection(connStr))
 			{
-				string sql = @"exec bet_match_result_update @match, 1, 
-					@h1_conner_home, @h1_conner_way, 
-					@h1_goal_home, @h1_goal_way, 
-					@h1_card_home, @h1_card_way, 
-					@ft_conner_home, @ft_conner_way, 
-					@ft_goal_home, @ft_goal_way, 
-					@ft_card_home, @ft_card_way, 
-					@serve_result,
-					@userID";
-
-				SqlCommand cmd = new SqlCommand(sql, conn);
-				
-				cmd.Parameters.AddWithValue("@match", data.ContainsKey("match") ? data["match"].ToString() : "");
-				cmd.Parameters.AddWithValue("@h1_conner_home", data.ContainsKey("h1_conner_home") && !string.IsNullOrEmpty(data["h1_conner_home"].ToString()) ? data["h1_conner_home"].ToString() : "");
-				cmd.Parameters.AddWithValue("@h1_conner_way", data.ContainsKey("h1_conner_way") && !string.IsNullOrEmpty(data["h1_conner_way"].ToString()) ? data["h1_conner_way"].ToString() : "");
-				cmd.Parameters.AddWithValue("@h1_goal_home", data.ContainsKey("h1_goal_home") && !string.IsNullOrEmpty(data["h1_goal_home"].ToString()) ? data["h1_goal_home"].ToString() : "");
-				cmd.Parameters.AddWithValue("@h1_goal_way", data.ContainsKey("h1_goal_way") && !string.IsNullOrEmpty(data["h1_goal_way"].ToString()) ? data["h1_goal_way"].ToString() : "");
-				cmd.Parameters.AddWithValue("@h1_card_home", data.ContainsKey("h1_card_home") && !string.IsNullOrEmpty(data["h1_card_home"].ToString()) ? data["h1_card_home"].ToString() : "");
-				cmd.Parameters.AddWithValue("@h1_card_way", data.ContainsKey("h1_card_way") && !string.IsNullOrEmpty(data["h1_card_way"].ToString()) ? data["h1_card_way"].ToString() : "");
-				cmd.Parameters.AddWithValue("@ft_conner_home", data.ContainsKey("ft_conner_home") && !string.IsNullOrEmpty(data["ft_conner_home"].ToString()) ? data["ft_conner_home"].ToString() : "");
-				cmd.Parameters.AddWithValue("@ft_conner_way", data.ContainsKey("ft_conner_way") && !string.IsNullOrEmpty(data["ft_conner_way"].ToString()) ? data["ft_conner_way"].ToString() : "");
-				cmd.Parameters.AddWithValue("@ft_goal_home", data.ContainsKey("ft_goal_home") && !string.IsNullOrEmpty(data["ft_goal_home"].ToString()) ? data["ft_goal_home"].ToString() : "");
-				cmd.Parameters.AddWithValue("@ft_goal_way", data.ContainsKey("ft_goal_way") && !string.IsNullOrEmpty(data["ft_goal_way"].ToString()) ? data["ft_goal_way"].ToString() : "");
-				cmd.Parameters.AddWithValue("@ft_card_home", data.ContainsKey("ft_card_home") && !string.IsNullOrEmpty(data["ft_card_home"].ToString()) ? data["ft_card_home"].ToString() : "");
-				cmd.Parameters.AddWithValue("@ft_card_way", data.ContainsKey("ft_card_way") && !string.IsNullOrEmpty(data["ft_card_way"].ToString()) ? data["ft_card_way"].ToString() : "");
-				cmd.Parameters.AddWithValue("@serve_result", data.ContainsKey("serve_result") && data["serve_result"] != null ? data["serve_result"].ToString() : "");
-				cmd.Parameters.AddWithValue("@userID", HttpContext.Current.Session["UserID"]);
-				
 				conn.Open();
-				SqlDataReader reader = cmd.ExecuteReader();
-				
-				int isSuccess = 0;
-				string msg = "";
-				
-				if (reader.Read())
-				{
-					isSuccess = reader["isSuccess"] != DBNull.Value ? Convert.ToInt32(reader["isSuccess"]) : 0;
-					msg = reader["msg"] != DBNull.Value ? reader["msg"].ToString() : "Có lỗi xảy ra";
-				}
-				else
-				{
-					isSuccess = 0;
-					msg = "Stored procedure không trả về kết quả";
-				}
-				
-				reader.Close();
-				conn.Close();
-				
-				var res = new Dictionary<string, object>();
-				res["isSuccess"] = isSuccess;
-				res["msg"] = msg;
-				
-				return ser.Serialize(res);
+				return ser.Serialize(MatchResultSave.Run(conn, null, WebMatchImport.Str(data, "match"),
+					HttpContext.Current.Session["UserID"], data, MatchResultSave.SupportsServe(conn, null)));
 			}
 		}
 		catch (Exception ex)
@@ -894,9 +840,9 @@
 						<i class="fa-solid fa-plus mr-2 group-hover:rotate-90 transition-transform"></i>
 						<span class="font-bold text-[11px] lg:text-xs tracking-wide">Thêm trận</span>
 					</button>
-					<% if (IsAdminUser()) { %>
-					<button type="button" onclick="webMatchOpen()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl shadow-lg font-bold text-xs whitespace-nowrap"><i class="fa-solid fa-globe mr-2"></i>Lấy từ web</button>
 					<% } %>
+					<% if (IsAdminUser() && (CheckRight("bet_match_insert") || CheckRight("bet_match_result"))) { %>
+					<button type="button" onclick="webMatchOpen()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl shadow-lg font-bold text-xs whitespace-nowrap"><i class="fa-solid fa-globe mr-2"></i>Lấy từ web</button>
 					<% } %>
 				</div>
 				
@@ -1031,7 +977,11 @@
 		
 		<uc:AddMatch runat="server" ID="ucAddMatch" OnMatchAdded="ucAddMatch_MatchAdded" />
 		<!--#include file="WebMatchDialogs.html" -->
-        <script>window.webMatchToken = '<%= Session["WebMatchToken"] %>';</script>
+        <script>
+            window.webMatchToken = '<%= Session["WebMatchToken"] %>';
+            window.webMatchCanImportOdds = <%= CheckRight("bet_match_insert") ? "true" : "false" %>;
+            window.webMatchCanImportResults = <%= CheckRight("bet_match_result") ? "true" : "false" %>;
+        </script>
         <script src="Scripts/web-match-import.js?v=<%= System.IO.File.GetLastWriteTimeUtc(Server.MapPath("~/Scripts/web-match-import.js")).Ticks %>"></script>
 		<uc:ResultMatch runat="server" ID="ucResultMatch" />
 		<uc:TicketMatch runat="server" ID="ucTicketMatch" />
