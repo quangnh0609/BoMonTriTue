@@ -94,7 +94,22 @@ public static class WebMatchPreviewTests
         Check(ApiFootballImport.LocalMatchId(match.Id) == WebMatchImport.CompactId("OM", "api-football:123"), "Historical imported ID is retained");
         var local = new ApiFootballResults.LocalMatch { Home = "home", Away = "Away", League = "Champions League", Kickoff = new DateTime(2026, 11, 21, 1, 0, 0) };
         Check(ApiFootballResults.IsSameMatch(local, match), "Matching manually created fixtures uses UTC+7 and both teams");
+        Check(ApiFootballResults.SelectFixture(local, new[] { match }) == match, "A manual match uses the metadata match");
+        var other = new WebMatchImport.Fixture {
+            Id = "124", Home = match.Home, Away = match.Away, League = match.League, Kickoff = match.Kickoff
+        };
+        local.FixtureId = 123;
+        match.Kickoff = match.Kickoff.AddDays(1);
+        Check(ApiFootballResults.SelectFixture(local, new[] { other, match }) == match, "Saved ID wins over matching metadata after a fixture changes date");
+        bool missingLinked = false;
+        try { ApiFootballResults.SelectFixture(local, new[] { other }); }
+        catch (InvalidOperationException) { missingLinked = true; }
+        Check(missingLinked, "When the saved ID is absent, never use another match with matching metadata");
+        local.FixtureId = null;
+        local.Id = ApiFootballImport.LocalMatchId(match.Id);
+        Check(ApiFootballResults.SelectFixture(local, new[] { other, match }) == match, "Old imports still recognize the hashed ID");
         local.League = "Different league";
+        match.Kickoff = other.Kickoff;
         Check(!ApiFootballResults.IsSameMatch(local, match), "Same teams and kickoff in a different league do not match");
 
         var results = ApiFootballResults.ReadScore(row);

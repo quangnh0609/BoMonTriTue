@@ -113,6 +113,7 @@
                 using (var conn = new SqlConnection(Connection))
                 {
                     conn.Open();
+                    ApiFootballResults.RequireFixtureTable(conn);
                     var matches = ApiFootballResults.List(conn, null, null);
                     Reply(new { ok = true, matches = matches.Select(m => new { m.Id, m.Name, m.Time, m.Status }).ToList() });
                 }
@@ -359,6 +360,7 @@
             conn.Open();
             using (var schema = new SqlCommand("SELECT CASE WHEN COL_LENGTH('dbo.bet_team','the_odds_api_name') IS NOT NULL AND COL_LENGTH('dbo.bet_team','api_football_name') IS NOT NULL AND COL_LENGTH('dbo.bet_season','the_odds_api_name') IS NOT NULL AND COL_LENGTH('dbo.bet_season','api_football_name') IS NOT NULL THEN 1 ELSE 0 END", conn))
                 if (Convert.ToInt32(schema.ExecuteScalar()) != 1) throw new InvalidOperationException("Chưa cập nhật DB. Chạy migration 20261114_WebImportAliases/01_web_import_aliases.sql trước khi nhập trận.");
+            if (source == "api-football") ApiFootballResults.RequireFixtureTable(conn);
             using (var tx = conn.BeginTransaction(IsolationLevel.Serializable))
             {
                 var resolvedTeams = ResolveEntities(conn, tx, ids.Select(id => results[id]), input);
@@ -400,6 +402,7 @@
                     }
                     using (var cmd = new SqlCommand("UPDATE bet_match_total SET user_host=@user WHERE match=@id", conn, tx))
                     { cmd.Parameters.AddWithValue("@user", currentUserId); cmd.Parameters.AddWithValue("@id", MatchId(f)); cmd.ExecuteNonQuery(); }
+                    if (source == "api-football") ApiFootballResults.LinkFixture(conn, tx, MatchId(f), f.Id);
                 }
                 tx.Commit();
             }

@@ -10,6 +10,7 @@ public static class ApiFootballResults
     public sealed class LocalMatch
     {
         public string Id, Name, Status, Home, Away, League;
+        public long? FixtureId;
         public DateTime Kickoff;
         public string Time { get { return Kickoff.ToString("HH:mm dd/MM/yyyy", CultureInfo.InvariantCulture); } }
     }
@@ -35,12 +36,13 @@ public static class ApiFootballResults
 
     public static List<LocalMatch> List(SqlConnection conn, SqlTransaction tx, IList<string> ids)
     {
-        using (var cmd = new SqlCommand(@"SELECT m.match, m.time, m.statusname, m.name,
+        using (var cmd = new SqlCommand(@"SELECT m.match, m.time, m.statusname, m.name, f.fixture_id,
     COALESCE(NULLIF(LTRIM(RTRIM(h.api_football_name)), ''), NULLIF(h.team_name, ''), m.home) AS home_name,
     COALESCE(NULLIF(LTRIM(RTRIM(w.api_football_name)), ''), NULLIF(w.team_name, ''), m.way) AS away_name,
     COALESCE(NULLIF(LTRIM(RTRIM(s.api_football_name)), ''), NULLIF(s.season_name, ''), m.season) AS league_name,
     COALESCE(NULLIF(h.team_name, ''), m.home) + N' - ' + COALESCE(NULLIF(w.team_name, ''), m.way) AS display_name
 FROM dbo.vbet_match_total m
+LEFT JOIN dbo.bet_api_football_fixture f ON f.match = m.match
 LEFT JOIN dbo.bet_team h ON h.team = m.home
 LEFT JOIN dbo.bet_team w ON w.team = m.way
 LEFT JOIN dbo.bet_season s ON s.season = m.season
@@ -63,11 +65,36 @@ WHERE m.status IN (1, 3)", conn, tx))
                 while (reader.Read())
                     matches.Add(new LocalMatch {
                         Id = reader["match"].ToString(), Kickoff = (DateTime)reader["time"],
+                        FixtureId = reader["fixture_id"] as long?,
                         Name = Convert.ToString(reader["display_name"] == DBNull.Value ? reader["name"] : reader["display_name"]),
                         Status = reader["statusname"].ToString(), Home = reader["home_name"].ToString(),
                         Away = reader["away_name"].ToString(), League = reader["league_name"].ToString()
                     });
             return matches;
+        }
+    }
+
+    public static void RequireFixtureTable(SqlConnection conn)
+    {
+        using (var cmd = new SqlCommand("SELECT OBJECT_ID(N'dbo.bet_api_football_fixture', N'U')", conn))
+            if (cmd.ExecuteScalar() == DBNull.Value)
+                throw new InvalidOperationException("Chưa cập nhật DB. Chạy migration 20261120_ApiFootballFixtureIds/01_api_football_fixture_ids.sql.");
+    }
+
+    public static void LinkFixture(SqlConnection conn, SqlTransaction tx, string match, string providerId)
+    {
+        long fixtureId;
+        if (!Int64.TryParse(providerId, NumberStyles.None, CultureInfo.InvariantCulture, out fixtureId) || fixtureId <= 0)
+            throw new InvalidOperationException("ID trận API-Football không hợp lệ.");
+        // The deterministic local ID allows the same link to be reused after deleting and reimporting a match.
+        using (var cmd = new SqlCommand(@"IF NOT EXISTS (
+    SELECT 1 FROM dbo.bet_api_football_fixture WITH (UPDLOCK, HOLDLOCK) WHERE match=@match AND fixture_id=@fixture
+)
+INSERT dbo.bet_api_football_fixture (match, fixture_id) VALUES (@match, @fixture);", conn, tx))
+        {
+            cmd.Parameters.Add("@match", SqlDbType.VarChar, 16).Value = match;
+            cmd.Parameters.Add("@fixture", SqlDbType.BigInt).Value = fixtureId;
+            cmd.ExecuteNonQuery();
         }
     }
 
@@ -77,66 +104,91 @@ WHERE m.status IN (1, 3)", conn, tx))
         using (var conn = new SqlConnection(connection))
         {
             conn.Open();
+            RequireFixtureTable(conn);
             var matches = List(conn, null, ids);
             bool supportsServe = MatchResultSave.SupportsServe(conn, null);
             var outcomes = ids.Except(matches.Select(m => m.Id)).Select(id => new Outcome {
                 Id = id, Name = id, Message = "Trận không còn ở trạng thái Trực tiếp hoặc Chờ kết quả."
             }).ToList();
-            foreach (var day in matches.GroupBy(m => m.Kickoff.Date))
+            var linked = matches.Where(m => m.FixtureId.HasValue).ToList();
+            for (int i = 0; i < linked.Count; i += 20)
             {
-                List<Dictionary<string, object>> rows;
-                try { rows = ApiFootballImport.FixturesOn(day.Key).ToList(); }
-                catch (InvalidOperationException ex)
-                {
-                    outcomes.AddRange(day.Select(m => new Outcome { Id = m.Id, Name = m.Name, Message = ex.Message }));
-                    continue;
-                }
-                var fixtures = rows.Select(row => new { Row = row, Match = ApiFootballImport.ReadFixture(row) })
-                    .Where(f => f.Match != null && f.Match.Id != "").ToList();
-                foreach (var match in day)
-                {
-                    var outcome = new Outcome { Id = match.Id, Name = match.Name };
-                    outcomes.Add(outcome);
-                    try
-                    {
-                        var candidates = fixtures.Where(f => ApiFootballImport.LocalMatchId(f.Match.Id) == match.Id).ToList();
-                        if (candidates.Count == 0) candidates = fixtures.Where(f => IsSameMatch(match, f.Match)).ToList();
-                        if (candidates.Count != 1)
-                            throw new InvalidOperationException(candidates.Count == 0 ? "Không tìm thấy trận khớp trên API-Football. Kiểm tra giải, đội và giờ thi đấu." : "Có nhiều trận API-Football trùng thông tin.");
-
-                        var candidate = candidates[0];
-                        string status = ApiFootballImport.FixtureStatus(candidate.Row);
-                        if (status != "FT" && status != "AET" && status != "PEN")
-                            throw new InvalidOperationException("API-Football chưa có kết quả chung cuộc (" + status + ").");
-
-                        var values = ReadScore(candidate.Row);
-                        var markets = ReadMarkets(conn, null, match.Id);
-                        bool needsStats = MatchResultSave.Markets.Any(group =>
-                            !group.Key.EndsWith("_goal", StringComparison.Ordinal) &&
-                            markets.Any(m => group.Value.Contains(m.Code) && m.Home == "" && m.Away == ""));
-                        string statsError = "";
-                        if (needsStats)
-                        {
-                            try
-                            {
-                                var data = ApiFootballImport.Get("fixtures/statistics?fixture=" + Uri.EscapeDataString(candidate.Match.Id) + "&half=true", 90);
-                                AddStatistics(values, WebMatchImport.Rows(data["response"]), candidate.Match, status);
-                            }
-                            catch (InvalidOperationException ex) { statsError = " " + ex.Message; }
-                        }
-                        Save(conn, user, match, values, supportsServe, outcome);
-                        outcome.Message += statsError;
-                    }
-                    catch (InvalidOperationException ex) { outcome.Message = ex.Message; }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Trace.TraceError("API-Football result for {0}: {1}", match.Id, ex);
-                        outcome.Message = "Không thể cập nhật trận này. Vui lòng thử lại hoặc nhập kết quả thủ công.";
-                    }
-                }
+                var batch = linked.Skip(i).Take(20).ToList();
+                ImportBatch(conn, user, batch, () => ApiFootballImport.FixturesById(batch.Select(m => m.FixtureId.Value)),
+                    supportsServe, outcomes);
             }
+            foreach (var day in matches.Where(m => !m.FixtureId.HasValue).GroupBy(m => m.Kickoff.Date))
+                ImportBatch(conn, user, day, () => ApiFootballImport.FixturesOn(day.Key), supportsServe, outcomes);
             return outcomes;
         }
+    }
+
+    private static void ImportBatch(SqlConnection conn, int user, IEnumerable<LocalMatch> matches,
+        Func<IEnumerable<Dictionary<string, object>>> fetch, bool supportsServe, List<Outcome> outcomes)
+    {
+        List<Dictionary<string, object>> rows;
+        try { rows = fetch().ToList(); }
+        catch (InvalidOperationException ex)
+        {
+            outcomes.AddRange(matches.Select(m => new Outcome { Id = m.Id, Name = m.Name, Message = ex.Message }));
+            return;
+        }
+        var fixtures = rows.Select(row => new { Row = row, Match = ApiFootballImport.ReadFixture(row) })
+            .Where(f => f.Match != null && f.Match.Id != "").ToList();
+        foreach (var match in matches)
+        {
+            var outcome = new Outcome { Id = match.Id, Name = match.Name };
+            outcomes.Add(outcome);
+            try
+            {
+                var chosen = SelectFixture(match, fixtures.Select(f => f.Match));
+                var candidate = fixtures.Single(f => Object.ReferenceEquals(f.Match, chosen));
+                string status = ApiFootballImport.FixtureStatus(candidate.Row);
+                if (status != "FT" && status != "AET" && status != "PEN")
+                    throw new InvalidOperationException("API-Football chưa có kết quả chung cuộc (" + status + ").");
+
+                var values = ReadScore(candidate.Row);
+                var markets = ReadMarkets(conn, null, match.Id);
+                bool needsStats = MatchResultSave.Markets.Any(group =>
+                    !group.Key.EndsWith("_goal", StringComparison.Ordinal) &&
+                    markets.Any(m => group.Value.Contains(m.Code) && m.Home == "" && m.Away == ""));
+                string statsError = "";
+                if (needsStats)
+                {
+                    try
+                    {
+                        var data = ApiFootballImport.Get("fixtures/statistics?fixture=" + Uri.EscapeDataString(candidate.Match.Id) + "&half=true", 90);
+                        AddStatistics(values, WebMatchImport.Rows(data["response"]), candidate.Match, status);
+                    }
+                    catch (InvalidOperationException ex) { statsError = " " + ex.Message; }
+                }
+                Save(conn, user, match, values, supportsServe, outcome);
+                outcome.Message += statsError;
+            }
+            catch (InvalidOperationException ex) { outcome.Message = ex.Message; }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError("API-Football result for {0}: {1}", match.Id, ex);
+                outcome.Message = "Không thể cập nhật trận này. Vui lòng thử lại hoặc nhập kết quả thủ công.";
+            }
+        }
+    }
+
+    public static WebMatchImport.Fixture SelectFixture(LocalMatch local, IEnumerable<WebMatchImport.Fixture> fixtures)
+    {
+        if (local.FixtureId.HasValue)
+        {
+            string id = local.FixtureId.Value.ToString(CultureInfo.InvariantCulture);
+            var linked = fixtures.Where(f => f.Id == id).ToList();
+            if (linked.Count != 1) throw new InvalidOperationException("API-Football không trả đúng một trận có ID " + id + ".");
+            return linked[0];
+        }
+
+        var candidates = fixtures.Where(f => ApiFootballImport.LocalMatchId(f.Id) == local.Id).ToList();
+        if (candidates.Count == 0) candidates = fixtures.Where(f => IsSameMatch(local, f)).ToList();
+        if (candidates.Count != 1)
+            throw new InvalidOperationException(candidates.Count == 0 ? "Không tìm thấy trận khớp trên API-Football. Kiểm tra giải, đội và giờ thi đấu." : "Có nhiều trận API-Football trùng thông tin.");
+        return candidates[0];
     }
 
     public static bool IsSameMatch(LocalMatch local, WebMatchImport.Fixture fixture)
@@ -248,7 +300,7 @@ FROM " + table + " WHERE m.match = @match", conn, tx))
         {
             var rows = ReadMarkets(conn, tx, original.Id);
             var current = List(conn, tx, new[] { original.Id }).SingleOrDefault();
-            if (current == null || current.Kickoff != original.Kickoff || current.Home != original.Home ||
+            if (current == null || current.FixtureId != original.FixtureId || current.Kickoff != original.Kickoff || current.Home != original.Home ||
                 current.Away != original.Away || current.League != original.League)
                 throw new InvalidOperationException("Thông tin hoặc trạng thái trận đã thay đổi. Vui lòng mở lại danh sách.");
 

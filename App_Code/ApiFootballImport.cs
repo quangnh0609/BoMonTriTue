@@ -168,6 +168,13 @@ public static class ApiFootballImport
     {
         return WebMatchImport.Rows(Get("fixtures?date=" + date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + "&timezone=Asia%2FBangkok", 120)["response"]);
     }
+
+    public static IEnumerable<Dictionary<string, object>> FixturesById(IEnumerable<long> ids)
+    {
+        var values = ids.Select(id => id.ToString(CultureInfo.InvariantCulture)).ToList();
+        string query = values.Count == 1 ? "id=" + values[0] : "ids=" + String.Join("-", values);
+        return WebMatchImport.Rows(Get("fixtures?" + query + "&timezone=Asia%2FBangkok", 120)["response"]);
+    }
     public static List<WebMatchImport.Market> LoadMarkets(WebMatchImport.Fixture fixture)
     {
         var books = new List<Dictionary<string, object>>();
