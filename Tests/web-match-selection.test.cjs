@@ -87,7 +87,16 @@ context.fetch = async (_, request) => {
     }
     await el('webMatchSearch').onclick();
     assert.equal(requests.length, 1, 'Empty league selection must not call server');
-    el('webMatchLeague').children.forEach(label => { label.children[0].checked = true; });
+    const allLeagues = el('webMatchLeague').children[0].children[0];
+    const leagueOptions = el('webMatchLeague').children.slice(1).map(label => label.children[0]);
+    allLeagues.checked = true; allLeagues.onchange();
+    assert(leagueOptions.every(input => input.checked), 'Select all checks every league');
+    leagueOptions[0].checked = false; leagueOptions[0].onchange();
+    assert(allLeagues.indeterminate && !allLeagues.checked, 'Partial selection updates select all');
+    allLeagues.checked = false; allLeagues.onchange();
+    assert(leagueOptions.every(input => !input.checked), 'Uncheck all clears every league');
+    assert(!allLeagues.indeterminate);
+    allLeagues.checked = true; allLeagues.onchange();
     const first=el('webMatchDays').children[0].dataset.day;
     const third=el('webMatchDays').children[2].dataset.day;
     el('webMatchDays').children[2].onclick();

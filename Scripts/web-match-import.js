@@ -228,9 +228,25 @@
         lock(true); el('webMatchFilterMessage').textContent = 'Đang tải giải đấu…';
         try {
             const data = await api({ action: 'leagues' });
+            const leagueChecks = [];
+            const allLabel = document.createElement('label'); allLabel.className = 'flex items-center gap-2 p-2 border-b font-semibold cursor-pointer';
+            const allCheck = document.createElement('input'); allCheck.type = 'checkbox'; allCheck.value = ''; allCheck.disabled = !data.leagues.length;
+            const allText = document.createElement('span'); allText.textContent = 'Chọn tất cả giải đấu';
+            allLabel.append(allCheck, allText); el('webMatchLeague').appendChild(allLabel);
+            function syncAllLeagues() {
+                const count = leagueChecks.filter(check => check.checked).length;
+                allCheck.checked = count > 0 && count === leagueChecks.length;
+                allCheck.indeterminate = count > 0 && count < leagueChecks.length;
+            }
+            allCheck.onchange = () => {
+                if (busy) return;
+                leagueChecks.forEach(check => { check.checked = allCheck.checked; });
+                syncAllLeagues();
+            };
             data.leagues.forEach(l => {
                 const label = document.createElement('label'); label.className = 'flex items-center gap-2 p-2 rounded hover:bg-blue-50 cursor-pointer';
                 const check = document.createElement('input'); check.type = 'checkbox'; check.value = l.id;
+                check.onchange = syncAllLeagues; leagueChecks.push(check);
                 const text = document.createElement('span'); text.textContent = l.name;
                 label.append(check, text); el('webMatchLeague').appendChild(label);
             });
@@ -245,7 +261,7 @@
     el('webMatchChangeSource').onclick = () => { if (!busy && allowSourceSelection) show('webMatchSource'); };
     el('webMatchSearch').onclick = async function () {
         if (busy) return;
-        const leagues = Array.from(el('webMatchLeague').querySelectorAll('input:checked')).map(input => input.value);
+        const leagues = Array.from(el('webMatchLeague').querySelectorAll('input:checked')).map(input => input.value).filter(Boolean);
         if (!leagues.length) { el('webMatchFilterMessage').textContent = 'Vui lòng chọn ít nhất một giải đấu.'; el('webMatchLeague').focus(); return; }
         if (!selectedDays.size) { el('webMatchFilterMessage').textContent = 'Vui lòng chọn ít nhất một ngày.'; return; }
         lock(true); el('webMatchFilterMessage').textContent = 'Đang lấy danh sách trận…';
