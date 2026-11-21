@@ -1,4 +1,4 @@
-<%@ Page Language="C#" AutoEventWireup="true" CodePage="65001" %>
+﻿<%@ Page Language="C#" AutoEventWireup="true" CodePage="65001" %>
 <%@ Register Src="~/ucAddMatch.ascx" TagPrefix="uc" TagName="AddMatch" %>
 <%@ Register Src="~/ucResultMatch.ascx" TagPrefix="uc" TagName="ResultMatch" %>
 <%@ Register Src="~/ucTicketMatch.ascx" TagPrefix="uc" TagName="TicketMatch" %>
@@ -841,7 +841,7 @@
 						<span class="font-bold text-[11px] lg:text-xs tracking-wide">Thêm trận</span>
 					</button>
 					<% } %>
-					<% if (IsAdminUser() && (CheckRight("bet_match_insert") || CheckRight("bet_match_result"))) { %>
+					<% if (CheckRight("bet_match_insert") || CheckRight("bet_match_result")) { %>
 					<button type="button" onclick="webMatchOpen()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl shadow-lg font-bold text-xs whitespace-nowrap"><i class="fa-solid fa-globe mr-2"></i>Lấy từ web</button>
 					<% } %>
 				</div>

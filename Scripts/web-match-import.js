@@ -1,4 +1,4 @@
-(function () {
+﻿(function () {
     'use strict';
     const el = id => document.getElementById(id);
     const allowSourceSelection = false;
@@ -218,7 +218,6 @@
         source = value; loaded = false; snapshot = ''; previewToken = ''; previewDrafts = {};  pendingIds = []; teamChoices = {}; newTeamCodes = {};
         el('webMatchList').replaceChildren();
         el('webMatchLeague').replaceChildren();
-        const placeholder = document.createElement('option'); placeholder.value = ''; placeholder.textContent = 'Chọn giải đấu'; el('webMatchLeague').appendChild(placeholder);
         const name = source === 'api-football' ? 'API-Football' : 'The Odds API';
         el('webMatchFilterTitle').textContent = 'Lấy trận đấu từ ' + name;
         el('webMatchResultsTitle').textContent = 'Chọn trận đấu từ ' + name;
@@ -229,7 +228,12 @@
         lock(true); el('webMatchFilterMessage').textContent = 'Đang tải giải đấu…';
         try {
             const data = await api({ action: 'leagues' });
-            data.leagues.forEach(l => { const option = document.createElement('option'); option.value = l.id; option.textContent = l.name; el('webMatchLeague').appendChild(option); });
+            data.leagues.forEach(l => {
+                const label = document.createElement('label'); label.className = 'flex items-center gap-2 p-2 rounded hover:bg-blue-50 cursor-pointer';
+                const check = document.createElement('input'); check.type = 'checkbox'; check.value = l.id;
+                const text = document.createElement('span'); text.textContent = l.name;
+                label.append(check, text); el('webMatchLeague').appendChild(label);
+            });
             loaded = true; el('webMatchFilterMessage').textContent = '';
         } catch (e) { el('webMatchFilterMessage').textContent = e.message; }
         finally { lock(false); }
@@ -241,11 +245,12 @@
     el('webMatchChangeSource').onclick = () => { if (!busy && allowSourceSelection) show('webMatchSource'); };
     el('webMatchSearch').onclick = async function () {
         if (busy) return;
-        if (!el('webMatchLeague').value) { el('webMatchFilterMessage').textContent = 'Vui lòng chọn một giải đấu.'; el('webMatchLeague').focus(); return; }
+        const leagues = Array.from(el('webMatchLeague').querySelectorAll('input:checked')).map(input => input.value);
+        if (!leagues.length) { el('webMatchFilterMessage').textContent = 'Vui lòng chọn ít nhất một giải đấu.'; el('webMatchLeague').focus(); return; }
         if (!selectedDays.size) { el('webMatchFilterMessage').textContent = 'Vui lòng chọn ít nhất một ngày.'; return; }
         lock(true); el('webMatchFilterMessage').textContent = 'Đang lấy danh sách trận…';
         try {
-            const data = await api({ action: 'search', dates: Array.from(selectedDays).sort(), league: el('webMatchLeague').value });
+            const data = await api({ action: 'search', dates: Array.from(selectedDays).sort(), leagues });
             snapshot = data.snapshot; previewDrafts = {}; teamChoices = {}; newTeamCodes = {}; pendingIds = []; el('webMatchList').replaceChildren();
             data.matches.forEach(m => {
                 const row = document.createElement('div'); row.className = 'p-3 border-b';

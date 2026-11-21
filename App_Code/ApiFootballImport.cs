@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Configuration;
@@ -154,12 +154,16 @@ public static class ApiFootballImport
     }
     public static Dictionary<string, WebMatchImport.Fixture> Search(List<DateTime> dates, string league)
     {
+        return Search(dates, new List<string> { league });
+    }
+    public static Dictionary<string, WebMatchImport.Fixture> Search(List<DateTime> dates, List<string> leagues)
+    {
         var result = new Dictionary<string, WebMatchImport.Fixture>();
         foreach (DateTime date in dates)
         foreach (var row in FixturesOn(date))
         {
             var f = ParseFixture(row);
-            if (f != null && f.LeagueId == league && dates.Contains(f.Kickoff.ToOffset(TimeSpan.FromHours(7)).Date) && f.Kickoff > DateTimeOffset.UtcNow) result[f.Id] = f;
+            if (f != null && leagues.Contains(f.LeagueId) && dates.Contains(f.Kickoff.ToOffset(TimeSpan.FromHours(7)).Date) && f.Kickoff > DateTimeOffset.UtcNow) result[f.Id] = f;
         }
         return result;
     }

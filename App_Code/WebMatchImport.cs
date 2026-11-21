@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections;
 using System.Configuration;
@@ -59,6 +59,17 @@ public static class WebMatchImport
     public static bool IsAllowedLeague(string key)
     {
         return GetLeagues().Any(l => String.Equals(l.id, key, StringComparison.Ordinal));
+    }
+    public static List<string> SelectedLeagues(Dictionary<string, object> input)
+    {
+        object value;
+        var items = input.TryGetValue("leagues", out value) ? value as IList : null;
+        if (!input.ContainsKey("leagues") && input.TryGetValue("league", out value) && value is string)
+            items = new string[] { (string)value };
+        if (items == null || items.Count == 0 || items.Count > 100 ||
+            items.Cast<object>().Any(id => !(id is string) || String.IsNullOrWhiteSpace((string)id)))
+            throw new InvalidOperationException("Vui lòng chọn ít nhất một giải đấu.");
+        return items.Cast<string>().Distinct(StringComparer.Ordinal).ToList();
     }
     public static List<string> SelectedIds(Dictionary<string, object> input)
     {

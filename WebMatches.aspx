@@ -1,4 +1,4 @@
-<%@ Page Language="C#" EnableSessionState="ReadOnly" %>
+﻿<%@ Page Language="C#" EnableSessionState="ReadOnly" %>
 <%@ Import Namespace="System.Data" %>
 <%@ Import Namespace="System.Data.SqlClient" %>
 <%@ Import Namespace="System.Configuration" %>
@@ -54,12 +54,6 @@
                 cmd.Parameters.Add("@id", SqlDbType.Int).Value = currentUserId;
                 conn.Open();
                 webImportAdmin = Convert.ToInt32(cmd.ExecuteScalar()) > 0;
-            }
-            if (!webImportAdmin)
-            {
-                Response.StatusCode = 403;
-                Response.TrySkipIisCustomErrors = true;
-                throw new InvalidOperationException("Chỉ admin được sử dụng chức năng Lấy từ web.");
             }
             // A restored FormsAuth login can have a new session while the page still holds its old token.
             // Same-origin JSON GET exposes no data to other origins and performs no import operation.
@@ -164,29 +158,32 @@
         DateTime today = DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(7)).Date;
         var dates = WebMatchImport.SelectedDates(input, today);
         DateTime from = dates.Min(), to = dates.Max().AddDays(1).AddSeconds(-1);
-        string league = WebMatchImport.Str(input, "league");
-        if (!AllowedLeague(league)) throw new InvalidOperationException("Vui lòng chọn một giải đấu trong danh sách được hỗ trợ.");
+        var leagues = WebMatchImport.SelectedLeagues(input);
+        if (leagues.Any(league => !AllowedLeague(league))) throw new InvalidOperationException("Vui lòng chọn giải đấu trong danh sách được hỗ trợ.");
         importState.Values.Remove("WebMatchResults");
         importState.Values.Remove("WebMatchPreviewToken"); importState.Values.Remove("WebMatchPreviewIds");
         var result = new Dictionary<string, WebMatchImport.Fixture>();
-        if (source == "api-football") result = ApiFootballImport.Search(dates, league);
+        if (source == "api-football") result = ApiFootballImport.Search(dates, leagues);
         else
         {
             var start = new DateTimeOffset(from, TimeSpan.FromHours(7));
             var end = new DateTimeOffset(to, TimeSpan.FromHours(7));
             string range = "&commenceTimeFrom=" + Uri.EscapeDataString(start.UtcDateTime.ToString("yyyy-MM-ddTHH:mm:ssZ")) + "&commenceTimeTo=" + Uri.EscapeDataString(end.UtcDateTime.ToString("yyyy-MM-ddTHH:mm:ssZ"));
-            string root = "sports/" + league;
-            var events = WebMatchImport.Rows(WebMatchImport.CachedGet(root + "/events?dateFormat=iso" + range, 120)).ToList();
-            events = events.Where(r => {
-                DateTimeOffset time = DateTimeOffset.Parse(WebMatchImport.Str(r, "commence_time"), CultureInfo.InvariantCulture);
-                return dates.Contains(time.ToOffset(TimeSpan.FromHours(7)).Date) && time > DateTimeOffset.UtcNow;
-            }).ToList();
-            foreach (var item in events)
+            foreach (string league in leagues)
             {
-                string id = WebMatchImport.Str(item, "id");
-                var raw = item;
-                string home = WebMatchImport.Str(raw, "home_team"), away = WebMatchImport.Str(raw, "away_team");
-                result[id] = new WebMatchImport.Fixture { Id = id, League = WebMatchImport.Str(raw, "sport_title"), LeagueId = league, Season = "", Home = home, Away = away, HomeId = home, AwayId = away, Kickoff = DateTimeOffset.Parse(WebMatchImport.Str(raw, "commence_time"), CultureInfo.InvariantCulture) };
+                string root = "sports/" + league;
+                var events = WebMatchImport.Rows(WebMatchImport.CachedGet(root + "/events?dateFormat=iso" + range, 120)).ToList();
+                events = events.Where(r => {
+                    DateTimeOffset time = DateTimeOffset.Parse(WebMatchImport.Str(r, "commence_time"), CultureInfo.InvariantCulture);
+                    return dates.Contains(time.ToOffset(TimeSpan.FromHours(7)).Date) && time > DateTimeOffset.UtcNow;
+                }).ToList();
+                foreach (var item in events)
+                {
+                    string id = WebMatchImport.Str(item, "id");
+                    var raw = item;
+                    string home = WebMatchImport.Str(raw, "home_team"), away = WebMatchImport.Str(raw, "away_team");
+                    result[id] = new WebMatchImport.Fixture { Id = id, League = WebMatchImport.Str(raw, "sport_title"), LeagueId = league, Season = "", Home = home, Away = away, HomeId = home, AwayId = away, Kickoff = DateTimeOffset.Parse(WebMatchImport.Str(raw, "commence_time"), CultureInfo.InvariantCulture) };
+                }
             }
         }
         importState.Values["WebMatchSource"] = source;

@@ -19,7 +19,7 @@ class Element {
     focus() {}
     get options() { return this.children; }
     querySelector() { return new Element(); }
-    querySelectorAll(selector) { return this.id === 'webMatchList' && selector.startsWith('input') ? selectedIds.map(value => ({value,checked:true})) : []; }
+    querySelectorAll(selector) { if (this.id === 'webMatchLeague') return this.children.map(label => label.children[0]).filter(input => input.checked); return this.id === 'webMatchList' && selector.startsWith('input') ? selectedIds.map(value => ({value,checked:true})) : []; }
 }
 const elements = new Map();
 const el = id => { if (!elements.has(id)) elements.set(id, new Element(id)); return elements.get(id); };
@@ -48,7 +48,7 @@ const selectedIds = testSourceSelector ? ['fixture-one'] : ['fixture-one', 'fixt
 context.fetch = async (_, request) => {
     const data = JSON.parse(request.body); requests.push(data);
     return { json: async () => {
-        if (data.action === 'leagues') return {ok:true,leagues:[]};
+        if (data.action === 'leagues') return {ok:true,leagues:[{id:"soccer_epl",name:"Premier League"},{id:"soccer_spain_la_liga",name:"La Liga"}]};
         if (data.action === 'listResults') return {ok:true,matches:[
             {Id:'live',Name:'Home – Away',Time:'20:00 31/12/2026',Status:'Trực tiếp'},
             {Id:'pending',Name:'Blue – Red',Time:'18:00 31/12/2026',Status:'Chờ kết quả'},
@@ -85,12 +85,15 @@ context.fetch = async (_, request) => {
         assert.equal(requests[0].source, 'api-football');
         assert.equal(requests[0].action, 'leagues');
     }
-    el('webMatchLeague').value='soccer_epl';
+    await el('webMatchSearch').onclick();
+    assert.equal(requests.length, 1, 'Empty league selection must not call server');
+    el('webMatchLeague').children.forEach(label => { label.children[0].checked = true; });
     const first=el('webMatchDays').children[0].dataset.day;
     const third=el('webMatchDays').children[2].dataset.day;
     el('webMatchDays').children[2].onclick();
     await el('webMatchSearch').onclick();
     assert.deepEqual(requests[1].dates, [first,third]);
+    assert.deepEqual(requests[1].leagues, ["soccer_epl", "soccer_spain_la_liga"]);
     assert.equal(requests.length,2,'Search must not request odds/create');
     assert(el('webMatchList').children[0].children[0].children[1].textContent.includes('31/12/2026'),'Show date as well as time');
     await el('webMatchCreate').onclick();

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Web.Script.Serialization;
 public static class WebMatchImportTests
@@ -6,6 +6,17 @@ public static class WebMatchImportTests
     static void Check(bool value, string message) { if (!value) throw new Exception(message); }
     public static void Main()
     {
+        var selectionSerializer = new JavaScriptSerializer();
+        Func<string, System.Collections.Generic.List<string>> leagues = raw => WebMatchImport.SelectedLeagues(
+            selectionSerializer.Deserialize<System.Collections.Generic.Dictionary<string, object>>(raw));
+        Check(leagues("{\"leagues\":[\"soccer_epl\",\"soccer_spain_la_liga\",\"soccer_epl\"]}").SequenceEqual(new[] { "soccer_epl", "soccer_spain_la_liga" }), "Multiple leagues are preserved and deduplicated");
+        Check(leagues("{\"league\":\"soccer_epl\"}").Single() == "soccer_epl", "Older single-league clients remain supported");
+        foreach (string invalid in new[] { "{}", "{\"leagues\":[]}", "{\"leagues\":[1]}", "{\"leagues\":[\" \"]}", "{\"leagues\":[],\"league\":\"soccer_epl\"}" })
+        {
+            bool rejected = false;
+            try { leagues(invalid); } catch (InvalidOperationException) { rejected = true; }
+            Check(rejected, "Invalid league selection must be rejected: " + invalid);
+        }
         string json = @"[
           {'key':'a','title':'A','markets':[
             {'key':'alternate_totals','outcomes':[
